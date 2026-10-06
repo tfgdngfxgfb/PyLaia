@@ -1,6 +1,8 @@
 exclude .pre-commit-config.yaml
-exclude .gitlab-ci.yaml
 exclude CONTRIBUTING.md
+include SECURITY.md
+include ci/build_language_model.py
+include ci/build-language-model.ps1
 
 prune .github
 prune benchmarks

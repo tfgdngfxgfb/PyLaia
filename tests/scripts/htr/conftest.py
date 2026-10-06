@@ -1,4 +1,3 @@
-import ssl
 import subprocess
 import sys
 from typing import List, Optional, Tuple
@@ -12,8 +11,8 @@ from laia import __root__
 def call_script(
     file: str, args: List[str], timeout: Optional[int] = 60 * 3
 ) -> Tuple[str, str]:
-    # To test distributed without GPUs, we are using the ddp_cpu accelerator."
-    # ddp_cpu uses multiprocessing.spawn behind the scenes. Spawned children do not"
+    # To test distributed without GPUs, we use the ddp_spawn strategy.
+    # Spawned children do not
     # inherit all parent resources, consequently, mocking does not work because"
     # children do not have their mocks configured. This means that we can't call"
     # the script's main manually with std{out,err} redirected (e.g. with"
@@ -39,9 +38,6 @@ def downloader():
     """https://docs.pytest.org/en/latest/fixture.html#conftest-py-sharing-fixture-functions"""
 
     def get(resource: str, archive: bool = False) -> str:
-        # --no-check-certificate
-        ssl._create_default_https_context = ssl._create_unverified_context
-
         from_root = "https://www.prhlt.upv.es/~cmocholi/PyLaia/test-resources"
         to_root = __root__ / "test-resources" / resource
         url = from_root + "/" + resource

@@ -1,4 +1,5 @@
 import os
+import pickle
 import shutil
 from collections import OrderedDict
 from glob import glob
@@ -9,14 +10,34 @@ from typing import Any, Callable, List, Optional, Union
 import natsort as ns
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 
-from laia.common.arguments import Layer
+from laia.common.arguments import Layer, Monitor
 from laia.common.logging import get_logger
 from laia.utils import SymbolsTable
 
 _logger = get_logger(__name__)
+
+
+def safe_checkpoint_globals():
+    """Fixed compatibility list, never inferred from an input file.
+
+    Model descriptors store activation/RNN classes, not instances. Lightning
+    checkpoints also store metric enums and the PyTorch version string.
+    """
+    return [
+        Monitor,
+        torch.torch_version.TorchVersion,
+        torch.nn.RNN,
+        torch.nn.GRU,
+        torch.nn.LSTM,
+        *[
+            obj
+            for obj in vars(torch.nn.modules.activation).values()
+            if isinstance(obj, type)
+            and issubclass(obj, torch.nn.Module)
+            and obj.__module__ == torch.nn.modules.activation.__name__
+        ],
+    ]
 
 
 class Loader:
@@ -28,29 +49,57 @@ class Loader:
 
 
 class BasicLoader(Loader):
+    def __init__(self, allow_unsafe_pickle: bool = False):
+        self.allow_unsafe_pickle = allow_unsafe_pickle
+
     def load(
         self, f: Union[str, BytesIO], device: Optional[Union[str, torch.device]] = None
     ) -> Any:
         try:
-            return torch.load(f, map_location=device)
+            with torch.serialization.safe_globals(safe_checkpoint_globals()):
+                return torch.load(
+                    f, map_location=device, weights_only=not self.allow_unsafe_pickle
+                )
+        except pickle.UnpicklingError as exc:
+            raise ValueError(
+                "Unsafe or unsupported model/checkpoint blocked. Only for files "
+                "from a fully trusted source, opt in with "
+                "--common.allow_unsafe_pickle=true (this can execute Python code)."
+            ) from exc
         except FileNotFoundError:
             _logger.info("Could not find the file {}", f)
 
 
 class ObjectLoader(Loader):
     def __init__(
-        self, f: Union[str, BytesIO], device: Optional[Union[str, torch.device]] = None
+        self,
+        f: Union[str, BytesIO],
+        device: Optional[Union[str, torch.device]] = None,
+        allow_unsafe_pickle: bool = False,
     ) -> None:
         self._f = f
         self._device = device
-        self._loader = BasicLoader()
+        self._loader = BasicLoader(allow_unsafe_pickle)
 
     def load(self) -> Any:
         obj = self._loader.load(self._f, device=self._device)
         if obj is None:
             return
-        module = import_module(obj["module"])
-        fn = getattr(module, obj["name"])
+        module_name, name = obj["module"], obj["name"]
+        if not self._loader.allow_unsafe_pickle:
+            # Validate before importing: a descriptor must not import arbitrary code.
+            factories = {
+                ("laia.models.htr.laia_crnn", "LaiaCRNN"),
+                ("laia.dummies.dummy_model", "DummyModel"),
+            }
+            if (module_name, name) not in factories:
+                raise ValueError(
+                    f"Untrusted model factory blocked: {module_name}.{name}. "
+                    "Custom factories require allow_unsafe_pickle=True and fully "
+                    "trusted input files."
+                )
+        module = import_module(module_name)
+        fn = getattr(module, name)
         args = obj.get("args", [])
         kwargs = obj.get("kwargs", {})
         # The key use_masks is deprecated
@@ -68,9 +117,12 @@ class ModelLoader(ObjectLoader):
         load_path: str,
         filename: str = "model",
         device: Optional[Union[str, torch.device]] = None,
+        allow_unsafe_pickle: bool = False,
     ) -> None:
         self._path = os.path.join(load_path, filename)
-        super().__init__(self._path, device=device)
+        super().__init__(
+            self._path, device=device, allow_unsafe_pickle=allow_unsafe_pickle
+        )
 
     def load(self) -> Any:
         model = super().load()
@@ -120,33 +172,49 @@ class ModelLoader(ObjectLoader):
         return model
 
     @staticmethod
-    def find_best(directory: str, monitor: str, mode: str = "min") -> Optional[str]:
+    def find_best(
+        directory: str,
+        monitor: str,
+        mode: str = "min",
+        allow_unsafe_pickle: bool = False,
+    ) -> Optional[str]:
+        if not os.path.isdir(directory):
+            return None
         ckpts = [
             os.path.join(directory, f)
             for f in os.listdir(directory)
             if f.endswith(".ckpt")
         ]
-        ckpts = [(f, torch.load(f, map_location="cpu")) for f in ckpts]
-        ckpts = [
-            (f, ckpt["callbacks"][type(pl.callbacks.ModelCheckpoint())])
-            for f, ckpt in ckpts
-        ]
-        # note: requires checkpoints generated using pl>1.0.4
-        ckpts = [(f, ckpt) for f, ckpt in ckpts if ckpt.get("monitor") == monitor]
-        if not ckpts:
+        candidates = []
+        for path in ckpts:
+            checkpoint = BasicLoader(allow_unsafe_pickle).load(path, device="cpu")
+            # Lightning 1.x used callback classes as keys; 2.x uses state-key strings.
+            for state in checkpoint.get("callbacks", {}).values():
+                if isinstance(state, dict) and state.get("monitor") == monitor:
+                    score = state.get("current_score")
+                    if score is not None:
+                        candidates.append((path, float(score)))
+        if not candidates:
             return
-        mode = min if mode == "min" else max
-        f, _ = mode(ckpts, key=lambda x: x[1]["current_score"])
+        choose = min if mode == "min" else max
+        f, _ = choose(candidates, key=lambda x: x[1])
         return f
 
     @staticmethod
-    def prepare_checkpoint(checkpoint: str, exp_dirpath: str, monitor: str) -> str:
+    def prepare_checkpoint(
+        checkpoint: str,
+        exp_dirpath: str,
+        monitor: str,
+        allow_unsafe_pickle: bool = False,
+    ) -> str:
         if checkpoint:
             checkpoint_path = os.path.join(exp_dirpath, checkpoint)
             found = ModelLoader.choose_by(checkpoint_path)
             err_msg = f'Could not find the checkpoint "{checkpoint_path}"'
         else:
-            found = ModelLoader.find_best(exp_dirpath, monitor)
+            found = ModelLoader.find_best(
+                exp_dirpath, monitor, allow_unsafe_pickle=allow_unsafe_pickle
+            )
             err_msg = f'Could not find a valid checkpoint in "{exp_dirpath}"'
         assert found, err_msg
         return found
@@ -158,6 +226,7 @@ class ModelLoader(ObjectLoader):
         model_path: str,
         checkpoint_path: str,
         early_stopping_patience: int,
+        allow_unsafe_pickle: bool = False,
     ):
         """
         Keep only the pretrained weights and reset other parameters, callbacks and the optimizer from the checkpoint.
@@ -174,7 +243,9 @@ class ModelLoader(ObjectLoader):
         new_checkpoint_path = f"{filename}_reset{file_extension}"
 
         # Load checkpoint
-        checkpoint = torch.load(checkpoint_path, map_location=torch.device("cpu"))
+        checkpoint = BasicLoader(allow_unsafe_pickle).load(
+            checkpoint_path, device="cpu"
+        )
 
         # Reinitialize the linear layer
         model.linear = torch.nn.Linear(model.linear.in_features, len(syms))
@@ -185,38 +256,27 @@ class ModelLoader(ObjectLoader):
             torch.empty(len(syms)),
         )
 
-        # Reinitialize the training settings
-        checkpoint["global_step"] = 0
-        checkpoint["epoch"] = 0
-
-        # Reinitialize the optimizer's state
-        checkpoint["optimizer_states"] = []
-
-        # Reinitialize the checkpoint callback
-        checkpoint["callbacks"][ModelCheckpoint]["best_model_score"] = torch.tensor(
-            float("inf")
-        )
-        checkpoint["callbacks"][ModelCheckpoint]["current_score"] = torch.tensor(
-            float("inf")
-        )
-        checkpoint["callbacks"][ModelCheckpoint][
-            "best_model_path"
-        ] = new_checkpoint_path
-
-        # Reinitialize the early stopping callback
-        checkpoint["callbacks"][EarlyStopping]["wait_count"] = 0
-        checkpoint["callbacks"][EarlyStopping]["stopped_epoch"] = 0
-        checkpoint["callbacks"][EarlyStopping]["best_score"] = torch.tensor(
-            float("inf")
-        )
-        checkpoint["callbacks"][EarlyStopping]["patience"] = early_stopping_patience
+        # Fine-tuning starts a new trainer/optimizer; transfer only the model weights.
+        checkpoint = {
+            "state_dict": checkpoint["state_dict"],
+            "pytorch-lightning_version": pl.__version__,
+            "epoch": 0,
+            "global_step": 0,
+        }
 
         # Save new checkpoint
         torch.save(checkpoint, new_checkpoint_path)
 
         # Save the new model object
-        model_object = torch.load(model_path)
-        model_object["kwargs"]["num_output_labels"] = len(syms)
+        model_object = BasicLoader(allow_unsafe_pickle).load(model_path, device="cpu")
+        if "num_output_labels" in model_object.get("kwargs", {}):
+            model_object["kwargs"]["num_output_labels"] = len(syms)
+        elif len(model_object.get("args", ())) >= 2:
+            args = list(model_object["args"])
+            args[1] = len(syms)
+            model_object["args"] = tuple(args)
+        else:
+            model_object.setdefault("kwargs", {})["num_output_labels"] = len(syms)
         torch.save(model_object, model_path)
 
         return new_checkpoint_path

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def visualize(args: argparse.Namespace):
-    with open(args.segmentation_path) as f:
+    with open(args.segmentation_path, encoding="utf-8") as f:
         lines = [l.split(args.separator, maxsplit=1) for l in f.readlines()]
         assert lines, "No segmentation data"
         for img_id, data in lines:

@@ -196,31 +196,32 @@ def test_run_validate_valid_dataset(tmpdir) -> None:
     prepare_data(tmpdir, IMG_SIZES_VALID)
     prepare_model(tmpdir)
     args = [
-        f"{tmpdir/'syms.txt'}",
+        f"{tmpdir / 'syms.txt'}",
         f"[{tmpdir}]",
-        f"{tmpdir/'train.txt'}",
-        f"{tmpdir/'val.txt'}",
-        f"{tmpdir/'test.txt'}",
+        f"{tmpdir / 'train.txt'}",
+        f"{tmpdir / 'val.txt'}",
+        f"{tmpdir / 'test.txt'}",
         "--fixed_input_height=128",
-        "--statistics_output=statistics.md",
+        f"--statistics_output={tmpdir / 'statistics.md'}",
         f"--common.train_path={tmpdir}",
     ]
     _, stderr = call_script(script.__file__, args)
     assert "Dataset is valid" in stderr
-    assert "Statistics written to statistics.md" in stderr
+    assert f"Statistics written to {tmpdir / 'statistics.md'}" in stderr
+    assert tmpdir.join("statistics.md").exists()
 
 
 def test_run_validate_invalid_dataset(tmpdir) -> None:
     prepare_data(tmpdir, IMG_SIZES_INVALID)
     prepare_model(tmpdir)
     args = [
-        f"{tmpdir/'syms.txt'}",
+        f"{tmpdir / 'syms.txt'}",
         f"[{tmpdir}]",
-        f"{tmpdir/'train.txt'}",
-        f"{tmpdir/'val.txt'}",
-        f"{tmpdir/'test.txt'}",
+        f"{tmpdir / 'train.txt'}",
+        f"{tmpdir / 'val.txt'}",
+        f"{tmpdir / 'test.txt'}",
         f"--fixed_input_height={128}",
-        "--statistics_output=statistics.md",
+        f"--statistics_output={tmpdir / 'statistics.md'}",
         f"--common.train_path={tmpdir}",
     ]
     _, stderr = call_script(script.__file__, args)

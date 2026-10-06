@@ -42,8 +42,8 @@ def test_netout_on_dummy_mnist_lines_data(tmpdir, nprocs):
         "--netout.matrix=matrix",
     ]
     if nprocs > 1:
-        args.append("--trainer.accelerator=ddp_cpu")
-        args.append(f"--trainer.num_processes={nprocs}")
+        args.extend(["--trainer.accelerator=cpu", "--trainer.strategy=ddp_spawn"])
+        args.append(f"--trainer.devices={nprocs}")
 
     _, stderr = call_script(script.__file__, args)
 

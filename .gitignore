@@ -83,7 +83,11 @@ kk/
 laia/version.py
 
 # data
-^datasets/
+datasets/
+.pytest_cache/
+.ruff_cache/
+.venv*/
+.runtime/
 test-resources/
 
 # benchmarks

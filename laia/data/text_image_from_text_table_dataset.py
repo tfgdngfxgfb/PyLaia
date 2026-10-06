@@ -63,7 +63,7 @@ def _load_text_table_from_file(
     table_file: Union[TextIO, str, List[str], Path],
 ) -> Generator[Tuple[int, str, str], None, None]:
     if isinstance(table_file, (str, Path)):
-        table_file = open(table_file)
+        table_file = open(table_file, encoding="utf-8")
     for line in (l.split(maxsplit=1) for l in table_file):
         # skip empty lines and lines starting with '#'
         if not line or line[0].startswith("#"):

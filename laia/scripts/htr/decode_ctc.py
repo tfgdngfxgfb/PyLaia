@@ -10,7 +10,7 @@ from laia.common.arguments import CommonArgs, DataArgs, DecodeArgs, TrainerArgs
 from laia.common.loader import ModelLoader
 from laia.decoders import CTCGreedyDecoder, CTCLanguageDecoder
 from laia.engine import Compose, DataModule, EvaluatorModule, ImageFeeder, ItemFeeder
-from laia.scripts.htr import common_main
+from laia.scripts.htr import common_main, create_parser
 from laia.utils import ImageLabelsStats, SymbolsTable
 from laia.utils.stats import Split
 
@@ -26,17 +26,21 @@ def run(
     num_workers: Optional[int] = None,
 ):
     loader = ModelLoader(
-        common.train_path, filename=common.model_filename, device="cpu"
+        common.train_path,
+        filename=common.model_filename,
+        device="cpu",
+        allow_unsafe_pickle=common.allow_unsafe_pickle,
     )
     checkpoint = loader.prepare_checkpoint(
         common.checkpoint,
         common.experiment_dirpath,
         common.monitor,
+        allow_unsafe_pickle=common.allow_unsafe_pickle,
     )
     model = loader.load_by(checkpoint)
-    assert (
-        model is not None
-    ), "Could not find the model. Have you run pylaia-htr-create-model?"
+    assert model is not None, (
+        "Could not find the model. Have you run pylaia-htr-create-model?"
+    )
 
     # prepare the evaluator
     evaluator_module = EvaluatorModule(
@@ -62,7 +66,7 @@ def run(
         else None,
         color_mode=data.color_mode,
         stage="test",
-        num_workers=num_workers,
+        num_workers=data.num_workers if num_workers is None else num_workers,
         reading_order=data.reading_order,
     )
 
@@ -87,7 +91,6 @@ def run(
 
     # prepare the testing callbacks
     callbacks = [
-        ProgressBar(refresh_rate=trainer.progress_bar_refresh_rate),
         Segmentation(
             syms,
             segmentation=decode.segmentation,
@@ -111,13 +114,15 @@ def run(
             reading_order=data.reading_order,
         ),
     ]
+    if trainer.enable_progress_bar is not False:
+        callbacks.append(ProgressBar(refresh_rate=trainer.progress_bar_refresh_rate))
 
     # prepare the trainer
     trainer = pl.Trainer(
         default_root_dir=common.train_path,
         callbacks=callbacks,
         logger=False,
-        **vars(trainer),
+        **trainer.as_trainer_kwargs(),
     )
 
     # decode!
@@ -125,7 +130,7 @@ def run(
 
 
 def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
-    parser = jsonargparse.ArgumentParser()
+    parser = create_parser("pylaia-htr-decode-ctc")
     parser.add_argument(
         "--config", action=jsonargparse.ActionConfigFile, help="Configuration file"
     )
@@ -162,7 +167,7 @@ def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
     parser.add_class_arguments(DecodeArgs, "decode")
     parser.add_class_arguments(TrainerArgs, "trainer")
 
-    args = parser.parse_args(argv, with_meta=False).as_dict()
+    args = parser.parse_args(argv).clone(with_meta=False).as_dict()
 
     args["common"] = CommonArgs(**args["common"])
     args["data"] = DataArgs(**args["data"])

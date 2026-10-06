@@ -29,7 +29,7 @@ def test_display_label_statistics(tmp_path):
     stats.create_label_statistics(
         labels=[
             ["a", "<space>", "t", "e", "x", "t"],
-            ["a", "n", "o", "t", "h", "e", "r" "<space>", "t", "e", "x", "t"],
+            ["a", "n", "o", "t", "h", "e", "r<space>", "t", "e", "x", "t"],
         ],
         delimiters=["<space>"],
     )

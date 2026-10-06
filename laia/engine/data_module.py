@@ -1,11 +1,9 @@
-import multiprocessing
 import random
 from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.utilities import DeviceType, DistributedType
 from torch.utils.data import DataLoader, DistributedSampler
 
 import laia.common.logging as log
@@ -41,6 +39,7 @@ class DataModule(pl.LightningDataModule):
         space_token: str = "<space>",
         space_display: str = " ",
     ) -> None:
+        super().__init__()
         assert stage in ("fit", "test")
         base_img_transform = transforms.vision.ToImageTensor(
             mode=color_mode, invert=True, min_width=min_valid_size
@@ -49,7 +48,7 @@ class DataModule(pl.LightningDataModule):
         self.img_channels = len(color_mode)
         self.batch_size = batch_size
         # TODO: https://github.com/PyTorchLightning/pytorch-lightning/issues/2196
-        self.num_workers = num_workers or multiprocessing.cpu_count()
+        self.num_workers = 0 if num_workers is None else num_workers
         if stage == "fit":
             self.tr_ds = None
             self.va_ds = None
@@ -70,17 +69,13 @@ class DataModule(pl.LightningDataModule):
                 space_token=space_token,
                 space_display=space_display,
             )
-            self.save_hyperparameters()
-
             _logger.info(f"Training data transforms:\n{tr_img_transform}")
-            super().__init__(
-                train_transforms=(tr_img_transform, txt_transform),
-                val_transforms=base_img_transform,
-            )
+            self.train_transforms = (tr_img_transform, txt_transform)
+            self.val_transforms = base_img_transform
         elif stage == "test":
             self.te_ds = None
             self.te_img_list = te_img_list
-            super().__init__(test_transforms=base_img_transform)
+            self.test_transforms = base_img_transform
 
     def setup(self, stage: Optional[str] = None):
         if stage == "fit":
@@ -109,11 +104,11 @@ class DataModule(pl.LightningDataModule):
     def get_unpadded_distributed_sampler(
         self, ds: torch.utils.data.Dataset
     ) -> Optional[DistributedSampler]:
-        if not self.trainer._distrib_type == DistributedType.DP:
+        if self.trainer.world_size <= 1:
             return
         return UnpaddedDistributedSampler(
             ds,
-            num_replicas=self.trainer.num_nodes * self.trainer.num_processes,
+            num_replicas=self.trainer.world_size,
             rank=self.trainer.global_rank,
             shuffle=False,
         )
@@ -126,7 +121,7 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=self.shuffle_tr,
             worker_init_fn=DataModule.worker_init_fn,
-            pin_memory=self.trainer._device_type == DeviceType.GPU,
+            pin_memory=self.trainer.strategy.root_device.type == "cuda",
             collate_fn=PaddingCollater(
                 {"img": (self.img_channels, None, None)}, sort_key=by_descending_width
             ),
@@ -140,7 +135,7 @@ class DataModule(pl.LightningDataModule):
             shuffle=False,
             sampler=self.get_unpadded_distributed_sampler(self.va_ds),
             num_workers=self.num_workers,
-            pin_memory=self.trainer._device_type == DeviceType.GPU,
+            pin_memory=self.trainer.strategy.root_device.type == "cuda",
             collate_fn=PaddingCollater(
                 {"img": (self.img_channels, None, None)}, sort_key=by_descending_width
             ),
@@ -153,7 +148,7 @@ class DataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             sampler=self.get_unpadded_distributed_sampler(self.te_ds),
             num_workers=self.num_workers,
-            pin_memory=self.trainer._device_type == DeviceType.GPU,
+            pin_memory=self.trainer.strategy.root_device.type == "cuda",
             collate_fn=PaddingCollater(
                 {"img": (self.img_channels, None, None)}, sort_key=by_descending_width
             ),

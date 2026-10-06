@@ -44,8 +44,8 @@ def test_decode_on_dummy_mnist_lines_data(tmpdir, nprocs):
         f"--data.batch_size={data_module.batch_size}",
     ]
     if nprocs > 1:
-        args.append("--trainer.accelerator=ddp_cpu")
-        args.append(f"--trainer.num_processes={nprocs}")
+        args.extend(["--trainer.accelerator=cpu", "--trainer.strategy=ddp_spawn"])
+        args.append(f"--trainer.devices={nprocs}")
 
     stdout, stderr = call_script(script.__file__, args)
     print(f"Script stdout:\n{stdout}")

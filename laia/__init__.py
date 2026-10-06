@@ -1,11 +1,8 @@
 import subprocess
-import sys
-from importlib.metadata import requires, version
+from importlib.metadata import distribution, version
 from pathlib import Path
 from shutil import which
 from typing import List
-
-from packaging.requirements import Requirement
 
 import laia.callbacks
 import laia.data
@@ -19,42 +16,37 @@ import laia.utils
 __all__ = ["__version__", "__root__", "get_installed_versions"]
 __lib__ = Path(__file__).parent
 __root__ = __lib__.parent
-__version__ = version("pylaia")
+__version__ = version("pylaia-fork")
 
 try:
+    git = which("git")
+    if git is None:
+        raise FileNotFoundError("git")
     branch = subprocess.check_output(
-        [which("git"), "-C", str(__root__), "branch", "--show-current"],
+        [git, "-C", str(__root__), "branch", "--show-current"],
         stderr=subprocess.DEVNULL,
     )
     branch = branch.decode().strip()
     node = subprocess.check_output(
-        [which("git"), "-C", str(__root__), "describe", "--always", "--dirty"],
+        [git, "-C", str(__root__), "describe", "--always", "--dirty"],
         stderr=subprocess.DEVNULL,
     )
     node = node.decode().strip()
     __version__ += f"-{branch}-{node}"
-except subprocess.CalledProcessError:
+except (subprocess.CalledProcessError, OSError):
     pass
 
 
 def get_installed_versions() -> List[str]:
-    # Get all dependencies
-    requirements: set[str] = {
-        req.name
-        for req in filter(
-            # Only keep direct dependencies
-            lambda x: x.marker is None,
-            # Parse lines
-            map(Requirement, requires("pylaia")),
-        )
-    }
-    freeze = subprocess.check_output(
-        [sys.executable, "-m", "pip", "freeze", "--exclude-editable"]
+    from packaging.requirements import Requirement
+
+    requirements = [
+        Requirement(req) for req in distribution("pylaia-fork").requires or []
+    ]
+    versions = sorted(
+        f"{req.name}=={version(req.name)}"
+        for req in requirements
+        if req.marker is None or req.marker.evaluate()
     )
-    freeze = freeze.decode().strip().split("\n")
-    versions = list(
-        # Only keep PyLaia dependencies
-        filter(lambda package: Requirement(package).name in requirements, freeze)
-    )
-    versions.append(f"laia=={__version__}")
+    versions.append(f"pylaia-fork=={__version__}")
     return versions

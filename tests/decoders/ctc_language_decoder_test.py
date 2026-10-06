@@ -100,6 +100,13 @@ ngram 2=14
 def test_lm_decoding_weight(
     tmpdir, input_tensor, lm_weight, expected_string, expected_confidence
 ):
+    pytest.importorskip(
+        "torchaudio.models.decoder",
+        reason="Optional language-model backend is not installed",
+    )
+    pytest.importorskip(
+        "flashlight.lib.text.decoder", reason="Flashlight has no Python 3.14 wheels"
+    )
     tokens_path = Path(tmpdir) / "tokens.txt"
     lexicon_path = Path(tmpdir) / "lexicon.txt"
     arpa_path = Path(tmpdir) / "lm.arpa"

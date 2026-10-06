@@ -288,7 +288,7 @@ pylaia-htr-train-ctc /path/to/syms.txt \
    `cat img_dirs_args.txt`\
    /path/to/train.txt \
    /path/to/val.txt \
-   --trainer.gpus 1 \
+   --trainer.accelerator gpu --trainer.devices 1 \
    --data.batch_size 32
 ----
 
@@ -321,8 +321,8 @@ train:
   augment_training: true
   early_stopping_patience: 80
 trainer:
-  auto_select_gpus: true
-  gpus: 1
+  accelerator: gpu
+  devices: 1
   max_epochs: 600
 ----
 
@@ -390,8 +390,8 @@ train:
   augment_training: true
   early_stopping_patience: 80
 trainer:
-  auto_select_gpus: true
-  gpus: 1
+  accelerator: gpu
+  devices: 1
   max_epochs: 600
 data:
   reading_order: RTL
@@ -404,7 +404,7 @@ By default, PyLaia logs metrics and losses to a local CSV file. You can chose to
 
 To set up Weights & Biases:
 
-* Run `pip install pylaia[wandb]` to install the required dependencies
+* Run `python -m pip install -e '.[wandb]'` to install the required dependencies
 * Sign in to Weights & Biases using `wandb login`
 
 Then, start training with `pylaia-htr-train-ctc --config config_train_model.yaml --train.log_to_wandb true`.

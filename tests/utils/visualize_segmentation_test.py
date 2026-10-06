@@ -28,7 +28,12 @@ def test_visualize_segmentation(tmpdir):
 
     axvspan_patch = patch.object(Axes, "axvspan")
     annotate_patch = patch.object(Axes, "annotate")
-    with imread_patch as p1, show_patch as p2, axvspan_patch as p3, annotate_patch as p4:
+    with (
+        imread_patch as p1,
+        show_patch as p2,
+        axvspan_patch as p3,
+        annotate_patch as p4,
+    ):
         visualize(ns)
         assert p1.called
         assert p2.called

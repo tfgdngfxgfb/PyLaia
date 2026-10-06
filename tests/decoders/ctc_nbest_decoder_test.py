@@ -1,4 +1,5 @@
 import unittest
+from itertools import product
 
 import torch
 
@@ -17,9 +18,20 @@ class CTCNBestDecoderTest(unittest.TestCase):
         )
         decoder = CTCNBestDecoder(4)
         r = decoder(x)
-        paths = ([1, 3, 2, 0], [1, 1, 2, 0], [1, 3, 2, 1], [1, 1, 2, 1])
-        e = [[(sum(x[i, 0, v] for i, v in enumerate(p)).item(), p) for p in paths]]
-        self.assertEqual(e, r)
+        # Several paths tie. Verify N-best scores against exhaustive enumeration
+        # without depending on torch.topk's unspecified tie order.
+        scores = sorted(
+            (
+                sum(x[i, 0, v] for i, v in enumerate(p)).item()
+                for p in product(range(4), repeat=4)
+            ),
+            reverse=True,
+        )[:4]
+        self.assertEqual(scores, [score for score, _ in r[0]])
+        self.assertEqual(4, len({tuple(path) for _, path in r[0]}))
+        for score, path in r[0]:
+            self.assertEqual(score, sum(x[i, 0, v] for i, v in enumerate(path)).item())
+        self.assertEqual(r, decoder(x))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,13 @@
 [#explicit-language-modeling-with-n-grams]
 = Explicit language modeling with n-grams
 
+IMPORTANT: This optional backend requires TorchAudio 2.11, Flashlight and KenLM.
+The fork provides patched Windows x64 builds for Python 3.13/3.14, verified with
+n-gram decoding and Unicode file paths. Use the bundled wheels or the fork's
+`ci/build-language-model.ps1` script. Linux language-model builds are not verified.
+Ordinary greedy decoding and segmentation do not require these packages.
+
+
 PyLaia supports lattice rescoring using a statistical language model.
 This documentation gives instructions to build a language model with https://kheafield.com/code/kenlm/[kenlm].
 

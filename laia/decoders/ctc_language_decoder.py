@@ -2,7 +2,6 @@ from typing import Any, Dict, List
 
 import numpy as np
 import torch
-from torchaudio.models.decoder import ctc_decoder
 
 from laia.losses.ctc_loss import transform_batch
 
@@ -34,6 +33,14 @@ class CTCLanguageDecoder:
         sil_token: str = "<space>",
         temperature: float = 1.0,
     ):
+        try:
+            from torchaudio.models.decoder import ctc_decoder
+        except (ImportError, OSError) as exc:
+            raise RuntimeError(
+                "Language-model decoding requires the optional torchaudio and "
+                "Flashlight/KenLM backend. Use this fork's bundled Windows wheels "
+                "or ci/build-language-model.ps1; otherwise use greedy decoding."
+            ) from exc
         self.decoder = ctc_decoder(
             lm=language_model_path,
             lexicon=lexicon_path,
@@ -75,10 +82,8 @@ class CTCLanguageDecoder:
 
         # No GPU support for torchaudio's ctc_decoder
         device = torch.device("cpu")
-        batch_features = batch_features.to(device)
-        if isinstance(batch_sizes, list):
-            batch_sizes = torch.tensor(batch_sizes)
-            batch_sizes.to(device)
+        batch_features = batch_features.to(device).contiguous()
+        batch_sizes = torch.as_tensor(batch_sizes, dtype=torch.int32, device=device)
 
         # Decode
         hypotheses = self.decoder(batch_features, batch_sizes)

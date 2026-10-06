@@ -1,3 +1,5 @@
+from os.path import normcase
+
 import pytest
 from PIL import Image
 
@@ -155,6 +157,9 @@ def test_img_stats(
     assert img_stats.character_set == expected_charset
     if img_stats.is_fixed_height:
         assert img_stats.min_height == expected_height
-    assert img_stats.get_invalid_images_height(expected_height) == [
-        str(tmpdir / filename) for filename in expected_filenames_invalid_height
+    assert [
+        normcase(path) for path in img_stats.get_invalid_images_height(expected_height)
+    ] == [
+        normcase(str(tmpdir / filename))
+        for filename in expected_filenames_invalid_height
     ]

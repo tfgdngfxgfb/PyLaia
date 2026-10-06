@@ -1,9 +1,9 @@
-from pytorch_lightning.plugins import DDPPlugin
+from pytorch_lightning.strategies import DDPStrategy
 
 import laia.common.logging as log
 
 
-class DummyLoggingPlugin(DDPPlugin):
+class DummyLoggingPlugin(DDPStrategy):
     def __init__(self, log_filepath):
         super().__init__()
         self.log_filepath = log_filepath

@@ -40,7 +40,7 @@ class ImageFromListDataset(ImageDataset):
 
 def _load_image_list_from_file(img_list: Union[str, List[str]]) -> List[str]:
     if isinstance(img_list, str):
-        with open(img_list) as f:
+        with open(img_list, encoding="utf-8") as f:
             img_list = [l.strip() for l in f]
             # skip empty lines and lines starting with '#'
             img_list = [l for l in img_list if l and not l.startswith("#")]

@@ -45,9 +45,10 @@ train(
     ),
     trainer=TrainerArgs(
         max_epochs=epochs,
-        weights_summary=None,
-        accelerator="ddp",
-        gpus=2,
+        enable_model_summary=False,
+        accelerator="gpu",
+        strategy="ddp",
+        devices=2,
         # training is still not deterministic on GPU
         deterministic=True,
     ),

@@ -36,11 +36,11 @@ def ctc_alignment(logpost_matrix, seq, ctc_sym=0) -> Tuple[float, List[int]]:
             f"is too large for the given matrix {T}x{S}"
         )
         assert sym != ctc_sym, (
-            "Reference includes the CTC symbol " f"({ctc_sym}) at position {i}"
+            f"Reference includes the CTC symbol ({ctc_sym}) at position {i}"
         )
 
     best_logp = np.ndarray((T, len(canonical)))
-    best_logp.fill(np.NINF)
+    best_logp.fill(-np.inf)
     best_alig = np.zeros((T, len(canonical)), dtype=np.int64)
 
     # t = 0

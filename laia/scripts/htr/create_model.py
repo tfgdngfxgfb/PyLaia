@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from dataclasses import replace
 from typing import Any, Dict, List, Optional
 
 import jsonargparse
@@ -10,7 +11,7 @@ import laia.common.logging as log
 from laia.common.arguments import CommonArgs, CreateCRNNArgs
 from laia.common.saver import ModelSaver
 from laia.models.htr import LaiaCRNN
-from laia.scripts.htr import common_main
+from laia.scripts.htr import common_main, create_parser
 from laia.utils import SymbolsTable
 
 
@@ -23,6 +24,7 @@ def run(
     save_model: bool = False,
 ) -> LaiaCRNN:
     seed_everything(common.seed)
+    crnn = replace(crnn)
 
     crnn.num_output_labels = len(SymbolsTable(syms))
     if crnn is not None:
@@ -35,9 +37,9 @@ def run(
                 cnn_poolsize=crnn.cnn_poolsize,
             )
             fixed_size_after_conv = conv_output_size[1 if crnn.vertical_text else 0]
-            assert (
-                fixed_size_after_conv > 0
-            ), "The image size is too small for the CNN architecture"
+            assert fixed_size_after_conv > 0, (
+                "The image size is too small for the CNN architecture"
+            )
             crnn.image_sequencer = f"none-{fixed_size_after_conv}"
         else:
             crnn.image_sequencer = adaptive_pooling
@@ -57,7 +59,8 @@ def run(
 
 
 def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
-    parser = jsonargparse.ArgumentParser(
+    parser = create_parser(
+        "pylaia-htr-create-model",
         description=(
             "Create a model for HTR composed of a set of convolutional blocks, followed"
             " by a set of bidirectional RNN layers, and a final linear layer. Each"
@@ -109,7 +112,7 @@ def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
     parser.add_function_arguments(log.config, "logging")
     parser.add_class_arguments(CreateCRNNArgs, "crnn")
 
-    args = parser.parse_args(argv, with_meta=False).as_dict()
+    args = parser.parse_args(argv).clone(with_meta=False).as_dict()
 
     args["common"] = CommonArgs(**args["common"])
     args["crnn"] = CreateCRNNArgs(**args["crnn"])

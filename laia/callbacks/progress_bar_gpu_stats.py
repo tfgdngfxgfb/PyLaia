@@ -1,63 +1,51 @@
 from typing import Dict, List, Tuple
 
 import pytorch_lightning as pl
-from pytorch_lightning.utilities import DeviceType, rank_zero_only
+import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-
-import laia.common.logging as log
-
-_logger = log.get_logger(__name__)
+from pytorch_lightning.utilities.rank_zero import rank_zero_only
 
 
-class ProgressBarGPUStats(pl.callbacks.GPUStatsMonitor):
+class ProgressBarGPUStats(pl.Callback):
+    """GPU memory usage through PyTorch's public CUDA API."""
+
     def __init__(self):
-        super().__init__(
-            memory_utilization=True,
-            gpu_utilization=False,
-            intra_step_time=False,
-            inter_step_time=False,
-            fan_speed=False,
-            temperature=False,
+        super().__init__()
+        self.gpu_stats = {}
+
+    def on_train_start(self, trainer, pl_module):
+        device = trainer.strategy.root_device
+        if device.type != "cuda":
+            raise MisconfigurationException("GPU statistics require accelerator='gpu'")
+        self._gpu_ids = str(
+            device.index if device.index is not None else torch.cuda.current_device()
         )
 
-    def on_train_start(self, trainer, *args, **kwargs):
-        if not trainer._device_type == DeviceType.GPU:
-            raise MisconfigurationException(
-                "You are using GPUStatsMonitor but are not running on GPU"
-                f" since gpus attribute in Trainer is set to {trainer.gpus}."
-            )
-        self._gpu_ids = ",".join(map(str, trainer.data_parallel_device_ids))
-
-    def on_train_batch_start(self, *_, **__):
-        pass
+    def _get_gpu_stats(self):
+        stats = []
+        for gpu_id in self._gpu_ids.split(","):
+            free, total = torch.cuda.mem_get_info(int(gpu_id))
+            stats.append([(total - free) / 2**20, free / 2**20])
+        return stats
 
     @rank_zero_only
-    def on_train_batch_end(self, trainer, *_, **__):
-        gpu_stat_keys = self._get_gpu_stat_keys() + self._get_gpu_device_stat_keys()
-        gpu_stats = self._get_gpu_stats([k for k, _ in gpu_stat_keys])
-        log.debug("GPU stats: {}", gpu_stats)
-        progress_bar_metrics = ProgressBarGPUStats.parse_gpu_stats(
-            self._gpu_ids, gpu_stats, gpu_stat_keys
+    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
+        self.gpu_stats = self.parse_gpu_stats(
+            self._gpu_ids,
+            self._get_gpu_stats(),
+            [("memory.used", "MB"), ("memory.free", "MB")],
         )
-        trainer.progress_bar_metrics["gpu_stats"] = progress_bar_metrics
 
     @staticmethod
     def parse_gpu_stats(
         gpu_ids: str, stats: List[List[float]], keys: List[Tuple[str, str]]
     ) -> Dict[str, str]:
-        j1, j2, used_unit, free_unit = None, None, None, None
-        for i, k in enumerate(keys):
-            if k[0] == "memory.used":
-                j1, used_unit = i, k[1]
-            elif k[0] == "memory.free":
-                j2, free_unit = i, k[1]
-
-        assert j1 is not None and j2 is not None
-        assert used_unit == free_unit
-        gpu_ids = gpu_ids.split(",")
-        assert len(gpu_ids) == len(stats)
-
+        used = next(i for i, key in enumerate(keys) if key[0] == "memory.used")
+        free = next(i for i, key in enumerate(keys) if key[0] == "memory.free")
+        assert keys[used][1] == keys[free][1]
+        ids = gpu_ids.split(",")
+        assert len(ids) == len(stats)
         return {
-            f"GPU-{gpu_id}": f"{int(stats[i][j1])}/{int(stats[i][j1] + stats[i][j2])}{used_unit}"
-            for i, gpu_id in enumerate(gpu_ids)
+            f"GPU-{gpu_id}": f"{int(row[used])}/{int(row[used] + row[free])}{keys[used][1]}"
+            for gpu_id, row in zip(ids, stats)
         }

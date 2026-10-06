@@ -10,7 +10,7 @@ def test_trainer_args():
     args = TrainerArgs()
     assert not hasattr(args, "callbacks")
     # instantiate to check if its valid
-    pl.Trainer(**vars(args))
+    pl.Trainer(**args.as_trainer_kwargs())
 
 
 def test_createcrnn_args_postinit():

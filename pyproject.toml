@@ -1,64 +1,81 @@
 [build-system]
-requires = ["setuptools >= 61.0"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pylaia"
-version = "1.1.2"
+name = "pylaia-fork"
+version = "1.2.0+fork.20261007"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
     {name = "Joan Puigcerver", email = "joapuipe@gmail.com"},
 ]
 maintainers = [
-    {name = "Teklia", email = "contact@teklia.com"},
+    {name = "tfgdngfxgfb"},
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Image Recognition",
     "Topic :: Text Processing :: Linguistic",
 ]
-requires-python = ">= 3.9, < 3.11"
+requires-python = ">=3.13,<3.15"
 dependencies = [
-    "imagesize==1.4.1",
-    "jsonargparse[signatures]==4.7",
-    "matplotlib==3.9.2",
+    "imagesize==2.0.1",
+    "jsonargparse[signatures]==4.52.0",
+    "matplotlib==3.11.2",
     "natsort==8.4.0",
-    "pytorch-lightning==1.4.2",
-    "scipy==1.11.3",
+    "pytorch-lightning==2.6.6",
+    "scipy==1.18.1",
     "textdistance==4.6.3",
-    "torch>=1.13,<1.14",
-    "torchaudio>=0.13,<0.14",
-    "torchmetrics<0.8.0",
-    "torchvision>=0.14,<0.15",
-    "mdutils==1.6.0",
-    "prettytable==3.11.0",
-    "python-bidi==0.6.0"
+    "torch==2.14.1",
+    "torchmetrics==1.9.0",
+    "torchvision==0.29.1",
+    "mdutils==1.8.1",
+    "prettytable==3.18.0",
+    "python-bidi==0.6.11",
+    "numpy==2.5.3",
+    "pillow==12.3.0",
+    "packaging>=23",
+    "tqdm>=4.66",
 ]
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 
 [project.urls]
-Homepage = "https://atr.pages.teklia.com/pylaia/"
-Downloads = "https://gitlab.teklia.com/atr/pylaia"
-Documentation = "https://atr.pages.teklia.com/pylaia/"
-Source = "https://gitlab.teklia.com/atr/pylaia/"
-Tracker = "https://gitlab.teklia.com/atr/pylaia/issues/"
+Homepage = "https://github.com/tfgdngfxgfb/PyLaia-fork"
+Documentation = "https://github.com/tfgdngfxgfb/PyLaia-fork/blob/main/README.md"
+Source = "https://github.com/tfgdngfxgfb/PyLaia-fork"
+Tracker = "https://github.com/tfgdngfxgfb/PyLaia-fork/issues"
 
 [project.optional-dependencies]
 dev = [
-    "pre-commit==3.8.0",
+    "pre-commit==4.6.2",
+    "ruff==0.16.10",
+    "build>=1.2",
+    "pip-audit==2.10.1",
 ]
 test = [
-    "tox==4.18.0",
+    "tox==4.64.9",
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "pandas>=2.2",
+    "regex>=2024.11.6",
+    "tensorboard>=2.18",
 ]
-wandb = ["wandb==0.18.5"]
+wandb = ["wandb==0.30.0"]
+language-model = ["torchaudio==2.11.0", "flashlight-text==0.0.7", "kenlm==0.3.0"]
 
 [project.scripts]
+pylaia-fork-htr-create-model = "laia.scripts.htr.create_model:main"
+pylaia-fork-htr-decode-ctc = "laia.scripts.htr.decode_ctc:main"
+pylaia-fork-htr-netout = "laia.scripts.htr.netout:main"
+pylaia-fork-htr-train-ctc = "laia.scripts.htr.train_ctc:main"
+pylaia-fork-htr-dataset-validate = "laia.scripts.htr.dataset.validate:main"
+# Compatibility aliases for existing configs and scripts.
 pylaia-htr-create-model = "laia.scripts.htr.create_model:main"
 pylaia-htr-decode-ctc = "laia.scripts.htr.decode_ctc:main"
 pylaia-htr-netout = "laia.scripts.htr.netout:main"
@@ -66,7 +83,7 @@ pylaia-htr-train-ctc = "laia.scripts.htr.train_ctc:main"
 pylaia-htr-dataset-validate = "laia.scripts.htr.dataset.validate:main"
 
 [tool.setuptools.packages.find]
-exclude = ["tests"]
+include = ["laia*"]
 
 [tool.coverage.paths]
 source = [
@@ -88,6 +105,9 @@ precision = 2
 pythonpath = "."
 
 [tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
 select = [
    # pycodestyle
    "E",
@@ -101,9 +121,6 @@ select = [
 ]
 
 
-# Avoid automatically removing unused imports in __init__.py files
-ignore-init-module-imports = true
-
 ignore = [
    # ambiguous-variable-name
    "E741",
@@ -111,7 +128,7 @@ ignore = [
    "E501",
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # unused imports in __init__.py files should either be stored in __all__ or re-exported with an alias
 "*/__init__.py" = ["F401", "F403"]
 

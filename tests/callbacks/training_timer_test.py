@@ -30,9 +30,9 @@ def test_cpu(tmpdir, num_processes):
         default_root_dir=tmpdir,
         max_epochs=2,
         callbacks=[TrainingTimer(), __TestCallback()],
-        accelerator="ddp_cpu" if num_processes > 1 else None,
-        num_processes=num_processes,
-        plugins=[DummyLoggingPlugin(log_filepath)],
+        accelerator="cpu",
+        devices=num_processes,
+        strategy=DummyLoggingPlugin(log_filepath),
     )
     trainer.fit(DummyEngine(), datamodule=DummyMNIST(batch_size=1))
 

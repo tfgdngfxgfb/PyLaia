@@ -153,7 +153,8 @@ def test_segmentation_callback(tmpdir, num_processes, kwargs, img_id, segm):
         default_root_dir=tmpdir,
         limit_test_batches=3,
         callbacks=[__TestSegmentation(img_id, segm, data_module.syms, **kwargs)],
-        accelerator="ddp_cpu" if num_processes > 1 else None,
-        num_processes=num_processes,
+        accelerator="cpu",
+        strategy="ddp_spawn" if num_processes > 1 else "auto",
+        devices=num_processes,
     )
     trainer.test(DummyEvaluator(), datamodule=data_module)

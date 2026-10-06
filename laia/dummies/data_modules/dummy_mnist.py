@@ -10,10 +10,9 @@ class DummyMNIST(pl.LightningDataModule):
     def __init__(self, batch_size: int = 64):
         self.batch_size = batch_size
         self.root = __root__ / "datasets"
-        super().__init__(
-            train_transforms=ToImageTensor(),
-            val_transforms=ToImageTensor(),
-        )
+        super().__init__()
+        self.train_transforms = ToImageTensor()
+        self.val_transforms = ToImageTensor()
         self.tr_ds = None
         self.va_ds = None
 

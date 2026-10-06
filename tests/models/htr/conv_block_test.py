@@ -88,9 +88,9 @@ def test_backprop(dtype, device, kwargs):
     for n, p in m.named_parameters():
         assert p.grad is not None, f"Parameter {n} does not have a gradient"
         sp = torch.abs(p.grad).sum()
-        assert not torch.allclose(
-            sp, torch.tensor(0, dtype=dtype)
-        ), f"Gradients for parameter {n} are close to 0 ({sp:g})"
+        assert not torch.allclose(sp, torch.tensor(0, dtype=dtype)), (
+            f"Gradients for parameter {n} are close to 0 ({sp:g})"
+        )
 
     # Check model for padded tensor inputs
     m.zero_grad()
@@ -99,9 +99,9 @@ def test_backprop(dtype, device, kwargs):
     for n, p in m.named_parameters():
         assert p.grad is not None, f"Parameter {n} does not have a gradient"
         sp = torch.abs(p.grad).sum()
-        assert not torch.allclose(
-            sp, torch.tensor(0, dtype=dtype)
-        ), f"Gradients for parameter {n} are close to 0 ({sp:g})"
+        assert not torch.allclose(sp, torch.tensor(0, dtype=dtype)), (
+            f"Gradients for parameter {n} are close to 0 ({sp:g})"
+        )
 
 
 if __name__ == "__main__":

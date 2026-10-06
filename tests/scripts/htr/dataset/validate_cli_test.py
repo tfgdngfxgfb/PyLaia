@@ -8,7 +8,7 @@ def test_entry_point():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    help = proc.stdout.decode()
+    help = proc.stdout.decode("utf-8").replace("\r\n", "\n")
     help = " ".join(help.split())
     assert help.startswith("usage: pylaia-htr-dataset-validate")
     assert (
@@ -25,7 +25,7 @@ def test_entry_point():
 
 
 EXPECTED_CONFIG = """syms: null
-img_dirs: []
+img_dirs: null
 tr_txt_table: null
 va_txt_table: null
 te_txt_table: null
@@ -38,6 +38,7 @@ common:
   experiment_dirname: experiment
   monitor: va_cer
   checkpoint: null
+  allow_unsafe_pickle: false
 train:
   delimiters:
   - <space>
@@ -63,5 +64,5 @@ def test_config_output():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    config = proc.stdout.decode().strip()
+    config = proc.stdout.decode("utf-8").replace("\r\n", "\n").strip()
     assert config == EXPECTED_CONFIG

@@ -33,7 +33,7 @@ def test_entry_point():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    help = proc.stdout.decode()
+    help = proc.stdout.decode("utf-8").replace("\r\n", "\n")
     help = " ".join(help.split())
     assert help.startswith("usage: pylaia-htr-netout")
     assert "File containing the images to decode" in help
@@ -52,10 +52,11 @@ common:
   experiment_dirname: experiment
   monitor: va_cer
   checkpoint: null
+  allow_unsafe_pickle: false
 data:
   batch_size: 8
   color_mode: L
-  num_workers: null
+  num_workers: 0
   reading_order: LTR
 logging:
   fmt: '[%(asctime)s %(levelname)s %(name)s] %(message)s'
@@ -76,7 +77,7 @@ def test_config_output():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    config = proc.stdout.decode().strip()
+    config = proc.stdout.decode("utf-8").replace("\r\n", "\n").strip()
     expected = expected_config + "\ntrainer:"
     assert config.startswith(expected)
 

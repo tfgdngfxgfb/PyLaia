@@ -1,6 +1,18 @@
 [#releases]
 = Releases
 
+== 1.2.0 — independent fork
+
+* Python 3.14 (also 3.13), PyTorch 2.14.1 and TorchVision 0.29.1.
+* Updated numerical, imaging, training and test dependencies.
+* Migrated Lightning callbacks, checkpoint loading/resume and fine-tuning.
+* UTF-8 file handling and zero-worker default on Windows.
+* Offline CPU/CUDA integration tests and independent private GitHub CI.
+* Greedy decoding works without TorchAudio. Optional Flashlight language-model
+  decoding needs a source build for Python 3.13/3.14 and is not yet verified.
+
+The entries below describe historical upstream releases, not this fork's requirements.
+
 [#1-1-1]
 == 1.1.1
 

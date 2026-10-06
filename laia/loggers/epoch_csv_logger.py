@@ -9,17 +9,25 @@ from pytorch_lightning.utilities import rank_zero_only
 
 
 class EpochCSVWriter(ExperimentWriter):
+    def __init__(self, log_dir, version=-1):
+        self.version = version
+        self.NAME_METRICS_FILE = (
+            "metrics.csv" if version < 0 else f"metrics-v{version}.csv"
+        )
+        super().__init__(log_dir)
+
     def save(self, version: Optional[int] = None) -> None:
         if not self.metrics:
             return
 
-        metrics = self.group_by_epoch(self.metrics)
+        metrics = self.group_by_epoch([dict(metric) for metric in self.metrics])
         keys = sorted({k for m in metrics for k in m.keys()})
+        version = self.version if version is None else version
         file_path = os.path.join(
             self.log_dir, "metrics.csv" if version < 0 else f"metrics-v{version}.csv"
         )
 
-        with open(file_path, "w", newline="") as f:
+        with open(file_path, "w", newline="", encoding="utf-8") as f:
             self.writer = csv.DictWriter(f, fieldnames=keys)
             self.writer.writeheader()
             self.writer.writerows(metrics)
@@ -68,13 +76,12 @@ class EpochCSVLogger(CSVLogger):
             return self._experiment
 
         os.makedirs(self.root_dir, exist_ok=True)
-        self._experiment = EpochCSVWriter(log_dir=self.log_dir)
+        self._experiment = EpochCSVWriter(log_dir=self.log_dir, version=self.version)
         return self._experiment
 
     @rank_zero_only
     def save(self) -> None:
-        super(CSVLogger, self).save()
-        self.experiment.save(version=self.version)
+        self.experiment.save()
 
     def _get_next_version(self) -> Optional[int]:
         return self.get_next_version(self.root_dir)

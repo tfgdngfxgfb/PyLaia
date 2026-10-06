@@ -125,7 +125,8 @@ def test_decode(tmpdir, num_processes, kwargs, img_id, hyp, prob):
         default_root_dir=tmpdir,
         limit_test_batches=3,
         callbacks=[decode_callback],
-        accelerator="ddp_cpu" if num_processes > 1 else None,
-        num_processes=num_processes,
+        accelerator="cpu",
+        strategy="ddp_spawn" if num_processes > 1 else "auto",
+        devices=num_processes,
     )
     trainer.test(module, datamodule=data_module)

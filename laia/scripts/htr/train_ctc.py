@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import os
+import shutil
+from dataclasses import replace
 from typing import Any, Dict, List, Optional
 
 import jsonargparse
@@ -17,10 +19,10 @@ from laia.common.arguments import (
     TrainArgs,
     TrainerArgs,
 )
-from laia.common.loader import ModelLoader
+from laia.common.loader import BasicLoader, ModelLoader, safe_checkpoint_globals
 from laia.engine import Compose, DataModule, HTREngineModule, ImageFeeder, ItemFeeder
 from laia.loggers import EpochCSVLogger
-from laia.scripts.htr import common_main
+from laia.scripts.htr import common_main, create_parser
 from laia.utils import ImageLabelsStats, SymbolsTable
 
 
@@ -38,40 +40,54 @@ def run(
     decode: DecodeArgs = DecodeArgs(),
 ):
     pl.seed_everything(common.seed)
+    trainer = replace(trainer)
+    if train.resume and train.pretrain:
+        raise ValueError("Choose either resume or pretrain, not both")
 
     loader = ModelLoader(
-        common.train_path, filename=common.model_filename, device="cpu"
+        common.train_path,
+        filename=common.model_filename,
+        device="cpu",
+        allow_unsafe_pickle=common.allow_unsafe_pickle,
     )
 
     # prepare the symbols
     syms = SymbolsTable(syms)
-    for d in train.delimiters:
+    delimiters = train.delimiters or []
+    for d in delimiters:
         assert d in syms, f'The delimiter "{d}" is not available in the symbols file'
 
     # maybe load a checkpoint
     if train.pretrain:
-        # Move the checkpoint in a pretrained directory to avoid it being selected by find_best
-        initial_ckpt = os.path.join(common.experiment_dirpath, common.checkpoint)
+        initial_ckpt = loader.prepare_checkpoint(
+            common.checkpoint,
+            common.experiment_dirpath,
+            common.monitor,
+            allow_unsafe_pickle=common.allow_unsafe_pickle,
+        )
         target_ckpt = os.path.join(
-            common.experiment_dirpath, "pretrained", common.checkpoint
+            common.experiment_dirpath, "pretrained", os.path.basename(initial_ckpt)
         )
-        loader.move_file(source=initial_ckpt, target=target_ckpt)
-        checkpoint_path = loader.prepare_checkpoint(
-            common.checkpoint, os.path.dirname(target_ckpt), common.monitor
-        )
+        os.makedirs(os.path.dirname(target_ckpt), exist_ok=True)
+        if os.path.abspath(initial_ckpt) != os.path.abspath(target_ckpt):
+            shutil.copy2(initial_ckpt, target_ckpt)
+        checkpoint_path = target_ckpt
 
     elif train.resume:
         checkpoint_path = loader.prepare_checkpoint(
-            common.checkpoint, common.experiment_dirpath, common.monitor
+            common.checkpoint,
+            common.experiment_dirpath,
+            common.monitor,
+            allow_unsafe_pickle=common.allow_unsafe_pickle,
         )
     else:
         checkpoint_path = None
 
     # load the non-pytorch_lightning model
     model = loader.load()
-    assert (
-        model is not None
-    ), "Could not find the model. Have you run pylaia-htr-create-model?"
+    assert model is not None, (
+        "Could not find the model. Have you run pylaia-htr-create-model?"
+    )
 
     if train.resume or train.pretrain:
         if train.pretrain:
@@ -81,9 +97,19 @@ def run(
                 model_path=os.path.join(common.train_path, common.model_filename),
                 checkpoint_path=checkpoint_path,
                 early_stopping_patience=train.early_stopping_patience,
+                allow_unsafe_pickle=common.allow_unsafe_pickle,
             )
 
-        trainer.max_epochs += torch.load(checkpoint_path)["epoch"]
+        if train.resume:
+            completed_epochs = (
+                BasicLoader(common.allow_unsafe_pickle).load(
+                    checkpoint_path, device="cpu"
+                )["epoch"]
+                + 1
+            )
+            trainer.max_epochs = (trainer.max_epochs or 1000) + completed_epochs
+        else:
+            model.load_state_dict(loader.get_model_state_dict(checkpoint_path))
         log.info(
             f'Using checkpoint "{checkpoint_path}" in {"pretrain" if train.pretrain else "resume"} mode'
         )
@@ -95,7 +121,7 @@ def run(
     # prepare the engine
     engine_module = HTREngineModule(
         model,
-        [syms[d] for d in train.delimiters],
+        [syms[d] for d in delimiters],
         optimizer=optimizer,
         scheduler=scheduler,
         batch_input_fn=Compose([ItemFeeder("img"), ImageFeeder()]),
@@ -119,7 +145,7 @@ def run(
         if dataset_stats.is_fixed_height
         else None,
         color_mode=data.color_mode,
-        shuffle_tr=not bool(trainer.limit_train_batches),
+        shuffle_tr=trainer.overfit_batches == 0,
         augment_tr=train.augment_training,
         stage="fit",
         num_workers=data.num_workers,
@@ -147,12 +173,14 @@ def run(
         mode="min",
         strict=False,  # training_step may return None
     )
-    callbacks = [
-        ProgressBar(refresh_rate=trainer.progress_bar_refresh_rate),
-        checkpoint_callback,
-        early_stopping_callback,
-        checkpoint_callback,
-    ]
+    callbacks = [early_stopping_callback]
+    if trainer.enable_model_summary is not False:
+        # Keep diagnostic output on the logger/stderr even when Rich is installed.
+        callbacks.append(pl.callbacks.ModelSummary())
+    if trainer.enable_checkpointing is not False:
+        callbacks.append(checkpoint_callback)
+    if trainer.enable_progress_bar is not False:
+        callbacks.append(ProgressBar(refresh_rate=trainer.progress_bar_refresh_rate))
     if train.gpu_stats:
         callbacks.append(ProgressBarGPUStats())
     if scheduler.active:
@@ -168,15 +196,19 @@ def run(
     # prepare the trainer
     trainer = pl.Trainer(
         default_root_dir=common.train_path,
-        resume_from_checkpoint=checkpoint_path,
         callbacks=callbacks,
         logger=loggers,
-        checkpoint_callback=True,
-        **vars(trainer),
+        **trainer.as_trainer_kwargs(),
     )
 
     # train!
-    trainer.fit(engine_module, datamodule=data_module)
+    with torch.serialization.safe_globals(safe_checkpoint_globals()):
+        trainer.fit(
+            engine_module,
+            datamodule=data_module,
+            ckpt_path=checkpoint_path if train.resume else None,
+            weights_only=not common.allow_unsafe_pickle,
+        )
 
     # training is over
     if early_stopping_callback.stopped_epoch:
@@ -187,17 +219,17 @@ def run(
             f" {early_stopping_callback.best_score}"
         )
     log.info(
-        f"Model has been trained for {trainer.current_epoch + 1} epochs"
-        f" ({trainer.global_step + 1} steps)"
+        f"Model has been trained for {trainer.current_epoch} epochs"
+        f" ({trainer.global_step} steps)"
     )
     log.info(
-        f"Best {checkpoint_callback.monitor}={checkpoint_callback.best_model_score} "
+        f"Best {getattr(checkpoint_callback.monitor, 'value', checkpoint_callback.monitor)}={checkpoint_callback.best_model_score} "
         f"obtained with model={checkpoint_callback.best_model_path}"
     )
 
 
 def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
-    parser = jsonargparse.ArgumentParser()
+    parser = create_parser("pylaia-htr-train-ctc")
     parser.add_argument(
         "--config", action=jsonargparse.ActionConfigFile, help="Configuration file"
     )
@@ -212,7 +244,7 @@ def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
     parser.add_argument(
         "img_dirs",
         type=List[str],
-        default=[],
+        metavar="img_dirs",
         help="Directories containing segmented line images",
     )
     parser.add_argument(
@@ -234,7 +266,7 @@ def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
     parser.add_class_arguments(TrainerArgs, "trainer")
     parser.add_class_arguments(DecodeArgs, "decode")
 
-    args = parser.parse_args(argv, with_meta=False).as_dict()
+    args = parser.parse_args(argv).clone(with_meta=False).as_dict()
 
     args["common"] = CommonArgs(**args["common"])
     args["train"] = TrainArgs(**args["train"])

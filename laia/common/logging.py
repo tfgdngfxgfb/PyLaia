@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import threading
 from enum import Enum
 from typing import Optional
 
@@ -62,6 +63,9 @@ class Logger(logging.Logger):
         super()._log(level=level, msg=msg, args=(), exc_info=exc_info, extra=extra)
 
 
+_logger_factory_lock = threading.RLock()
+
+
 def get_logger(name: str = "laia") -> Logger:
     """Create/Get the Laia logger.
     The logger is an object of the class :class:`~.Logger`
@@ -72,19 +76,19 @@ def get_logger(name: str = "laia") -> Logger:
     Returns:
         A :obj:`~.Logger` object.
     """
-    logging._acquireLock()  # noqa
-    backup_class = logging.getLoggerClass()
-    logging.setLoggerClass(Logger)
-    logger = logging.getLogger(name)
-    logging.setLoggerClass(backup_class)
-    logging._releaseLock()  # noqa
-    return logger
+    with _logger_factory_lock:
+        backup_class = logging.getLoggerClass()
+        try:
+            logging.setLoggerClass(Logger)
+            return logging.getLogger(name)
+        finally:
+            logging.setLoggerClass(backup_class)
 
 
 # Laia root logger
 root = get_logger()
 # pytorch-lightning logger
-lightning = logging.getLogger("lightning")
+lightning = logging.getLogger("pytorch_lightning")
 lightning.handlers = []
 # warnings logger
 warnings = logging.getLogger("py.warnings")
@@ -164,7 +168,9 @@ def config(
         dirname = os.path.dirname(filepath)
         if dirname:
             os.makedirs(dirname, exist_ok=True)
-        handler = logging.FileHandler(filepath, "w" if overwrite else "a")
+        handler = logging.FileHandler(
+            filepath, "w" if overwrite else "a", encoding="utf-8"
+        )
         handler.setFormatter(fmt)
         root.addHandler(handler)
         lightning.addHandler(handler)

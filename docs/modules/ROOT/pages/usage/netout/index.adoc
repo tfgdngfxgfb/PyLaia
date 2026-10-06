@@ -163,9 +163,9 @@ Pytorch Lightning `Trainer` flags can also be set using the `--trainer` argument
 
 This flag is mostly useful to define whether to predict on CPU or GPU.
 
-* `--trainer.gpus 0` to run on CPU,
-* `--trainer.gpus n` to run on `n` GPUs (use with `--training.auto_select True` for auto-selection),
-* `--trainer.gpus -1` to run on all GPUs.
+* `--trainer.accelerator cpu --trainer.devices 1` to run on CPU,
+* `--trainer.accelerator gpu --trainer.devices n` to run on `n` GPUs,
+* `--trainer.accelerator gpu --trainer.devices -1` to run on all GPUs.
 
 [#examples]
 == Examples

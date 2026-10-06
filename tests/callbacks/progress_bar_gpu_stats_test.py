@@ -24,8 +24,7 @@ def test_progress_bar_gpu_stats(monkeypatch, tmpdir):
     def _fake_on_train_start(self, *_):
         self._gpu_ids = "0,1"
 
-    def _fake_setup(self, trainer, pl_module, stage=None):
-        ...
+    def _fake_setup(self, trainer, pl_module, stage=None): ...
 
     fake_stats = [[1.2, 2.3], [3.4, 4.5]]
     monkeypatch.setattr(shutil, "which", lambda _: True)
@@ -44,4 +43,4 @@ def test_progress_bar_gpu_stats(monkeypatch, tmpdir):
         f"GPU-{i}": f"{int(fake_stats[i][0])}/{int(sum(fake_stats[i]))}MB"
         for i in range(2)
     }
-    assert trainer.progress_bar_dict["gpu_stats"] == expected
+    assert trainer.callbacks[0].gpu_stats == expected

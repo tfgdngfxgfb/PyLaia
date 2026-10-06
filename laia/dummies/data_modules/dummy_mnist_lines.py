@@ -1,4 +1,6 @@
 import shutil
+import tempfile
+from pathlib import Path
 from typing import List, Optional, Union
 
 import numpy as np
@@ -21,7 +23,9 @@ class DummyMNISTLines(DummyMNIST):
         batch_size: int = 8,
     ):
         super().__init__(batch_size=batch_size)
-        self.root = self.root / "MNIST-lines"
+        self.root.mkdir(parents=True, exist_ok=True)
+        # Do not erase another instance's generated dataset during concurrent runs.
+        self.root = Path(tempfile.mkdtemp(prefix="MNIST-lines-", dir=self.root))
         self.max_length = max_length
         self.n = {"tr": tr_n, "va": va_n}
         self.space_sym = space_sym

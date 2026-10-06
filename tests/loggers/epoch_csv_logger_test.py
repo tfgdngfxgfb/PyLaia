@@ -83,8 +83,9 @@ def test_epoch_csv_logger(tmpdir, num_processes):
         trainer = DummyTrainer(
             default_root_dir=tmpdir,
             max_epochs=3,
-            accelerator="ddp_cpu" if num_processes > 1 else None,
-            num_processes=num_processes,
+            accelerator="cpu",
+            strategy="ddp_spawn" if num_processes > 1 else "auto",
+            devices=num_processes,
             logger=EpochCSVLogger(tmpdir),
         )
         trainer.fit(DummyEngine(), datamodule=DummyMNIST(batch_size=2))
@@ -99,8 +100,8 @@ def test_epoch_csv_logger(tmpdir, num_processes):
         # check test variable "bar" values
         assert list(csv["bar"].values) == list(
             range(
-                trainer.limit_train_batches - 1,
-                (trainer.limit_train_batches * trainer.max_epochs),
+                trainer.limit_train_batches,
+                (trainer.limit_train_batches * (trainer.max_epochs + 1)),
                 trainer.limit_train_batches,
             )
         )

@@ -2,7 +2,7 @@ import inspect
 from dataclasses import dataclass, field, make_dataclass
 from enum import Enum
 from os.path import join
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Type, Union, get_type_hints
 
 import pytorch_lightning as pl
 import torch
@@ -57,6 +57,8 @@ class CommonArgs:
                 the highest epoch number, globbing will be done inside the
                 `experiment_dirname` directory
         monitor: Metric to monitor for early stopping and checkpointing.
+        allow_unsafe_pickle: Allow arbitrary Python objects and custom model factories
+            from fully trusted legacy files. These files can execute code.
     """
 
     seed: int = 74565  # 0x12345
@@ -65,6 +67,7 @@ class CommonArgs:
     experiment_dirname: str = "experiment"
     monitor: Monitor = Monitor.va_cer
     checkpoint: Optional[str] = None
+    allow_unsafe_pickle: bool = False
 
     def __post_init__(self):
         self.experiment_dirpath = join(self.train_path, self.experiment_dirname)
@@ -190,7 +193,7 @@ class DataArgs:
 
     batch_size: PositiveInt = 8
     color_mode: ColorMode = ColorMode.L
-    num_workers: Optional[int] = None
+    num_workers: NonNegativeInt = 0
     reading_order: ReadingOrder = ReadingOrder.LTR
 
 
@@ -275,6 +278,7 @@ class SchedulerArgs:
 
 def __get_trainer_fields() -> List[Tuple[str, Type, Any]]:
     sig = inspect.signature(pl.Trainer.__init__)
+    hints = get_type_hints(pl.Trainer.__init__)
     parameters = list(sig.parameters.values())
     parameters = parameters[1:]  # exclude self
     # the following are manually set already in the scripts
@@ -290,7 +294,9 @@ def __get_trainer_fields() -> List[Tuple[str, Type, Any]]:
         "auto_lr_find",
     )
     return [
-        (p.name, p.annotation, p.default) for p in parameters if p.name not in blocklist
+        (p.name, hints.get(p.name, p.annotation), p.default)
+        for p in parameters
+        if p.name not in blocklist
     ]
 
 
@@ -298,9 +304,15 @@ def __get_trainer_fields() -> List[Tuple[str, Type, Any]]:
 class TrainerArgs(make_dataclass("", __get_trainer_fields())):
     __doc__ = pl.Trainer.__init__.__doc__
 
-    def __post_init__(self):
-        if self.progress_bar_refresh_rate is None:
-            self.progress_bar_refresh_rate = 1
+    progress_bar_refresh_rate: NonNegativeInt = 1
+
+    def as_trainer_kwargs(self):
+        """Arguments accepted by Lightning; refresh rate belongs to our callback."""
+        return {
+            key: value
+            for key, value in vars(self).items()
+            if key != "progress_bar_refresh_rate"
+        }
 
 
 @dataclass

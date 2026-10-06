@@ -1,5 +1,9 @@
 [#pylaia]
-= PyLaia
+= PyLaia private fork
+
+This independent fork targets Python 3.14 with PyTorch 2.14.1 and Lightning 2.6.6.
+Use this repository's README for current installation and compatibility limits.
+The original authors' history is preserved below.
 
 [#what-is-pylaia]
 == What is PyLaia?
@@ -16,7 +20,7 @@ PyLaia is the successor of https://github.com/jpuigcerver/Laia[Laia]. It was dev
 
 The toolkit was originally developed using Torch. When Torch's development was discontinued in 2017, it became clear that building PyLaia as a second-generation system using PyTorch as its foundation was a logical step. PyLaia was written in 2018 by https://github.com/jpuigcerver[@jpuigcerver] as a Ph.D. thesis experiment and by https://github.com/carmocca[@carmocca] as an undergraduate final project.
 
-Since 2022, three members of https://teklia.com/[TEKLIA] (https://gitlab.teklia.com/babadie[@babadie], https://gitlab.teklia.com/yschneider[@yschneider], https://gitlab.teklia.com/starride[@starride]) maintain and improve the toolkit.
+From 2022, three members of https://teklia.com/[TEKLIA] (https://gitlab.teklia.com/babadie[@babadie], https://gitlab.teklia.com/yschneider[@yschneider], https://gitlab.teklia.com/starride[@starride]) maintained and improved the upstream toolkit.
 
 [#get-started]
 == Get started

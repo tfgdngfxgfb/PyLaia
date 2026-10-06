@@ -4,7 +4,7 @@ from typing import Dict, List, Union
 
 import numpy as np
 from mdutils.mdutils import MdUtils
-from prettytable import MARKDOWN, PrettyTable
+from prettytable import PrettyTable, TableStyle
 
 from laia.callbacks.meters.sequence_error import char_to_word_seq
 
@@ -33,7 +33,7 @@ def create_table(
 
     statistics = PrettyTable(field_names=[METRIC_COLUMN, *data.keys()])
     statistics.align.update({METRIC_COLUMN: "l"})
-    statistics.set_style(MARKDOWN)
+    statistics.set_style(TableStyle.MARKDOWN)
 
     operations = []
 
@@ -133,7 +133,7 @@ class Statistics:
             field_names=["Character", "Occurrence"],
         )
         char_occurrences.align.update({"Character": "l", "Occurrence": "r"})
-        char_occurrences.set_style(MARKDOWN)
+        char_occurrences.set_style(TableStyle.MARKDOWN)
         char_occurrences.add_rows(list(char_counter.most_common()))
 
         self._write_section(

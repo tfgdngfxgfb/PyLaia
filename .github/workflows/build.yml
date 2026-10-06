@@ -1,43 +1,80 @@
-name: Laia CI
+name: PyLaia CI
 
 on:
   push:
-    branches: [master]
-    paths-ignore: ['README.md']
+    branches: [main]
   pull_request:
-  schedule:
-    # at 07:00 on Sunday
-    - cron: '0 7 * * SUN'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  pre-commit:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.10"
-      - name: Run pre-commit
-        run: |
-          pip install pre-commit
-          pre-commit run --all-files
-
-  pytest:
-    name: Python ${{ matrix.python }}
-    runs-on: ubuntu-latest
+          python-version: '3.14'
+      - run: python -m pip install pre-commit==4.6.2 ruff==0.16.10
+      - run: pre-commit run --all-files
+  test:
+    name: Python ${{ matrix.python }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.9", "3.10"]
+        python: ['3.13', '3.14']
+        os: [ubuntu-latest, windows-latest]
+    env:
+      PYTHONUTF8: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python }}
-    - name: Install requirements
-      run: pip install .[test]
-    - name: Run pytest
-      run: pytest --cov=laia tests
-    - uses: codecov/codecov-action@v3
-      # upload coverage only for main job
-      if: ${{ matrix.python == '3.10' }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install CPU PyTorch
+        run: python -m pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
+      - name: Install PyLaia and test tools
+        run: python -m pip install '.[test]'
+      - name: Test
+        run: python -m pytest --cov=laia --cov-report=term-missing tests
+      - name: Build distributable packages
+        run: |
+          python -m pip install build
+          python -m build
+      - name: Audit package advisories
+        shell: bash
+        run: |
+          python -m pip install pip-audit==2.10.1
+          python -m pip_audit --local --skip-editable --progress-spinner off
+          python -m pip freeze | sed -E 's/\+cpu//g' | sed '/^pylaia/d;/^#/d;/^-e /d' > audit-requirements.txt
+          python -m pip_audit --disable-pip --no-deps -r audit-requirements.txt --progress-spinner off
+  language-model:
+    name: Windows language model / Python ${{ matrix.python }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.13', '3.14']
+    env:
+      PYTHONUTF8: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install CPU PyTorch and PyLaia
+        run: |
+          python -m pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install '.[test]'
+      - name: Build and install patched Flashlight and KenLM
+        shell: pwsh
+        run: ./ci/build-language-model.ps1 -Python python -Install
+      - name: Verify language-model decoding
+        run: python -m pytest -q tests/decoders/ctc_language_decoder_test.py

@@ -1,38 +1,40 @@
 [#installation]
 = Installation
 
-To use PyLaia in your own environment, you need to install from PyPi or manually.
-
-[#from-pypi]
-== From PyPi
-
-To install PyLaia from https://pypi.org/project/pylaia/[PyPi], use this command:
-
-[,shell]
-----
-pip install pylaia
-----
+This private independent fork requires Python 3.13 or 3.14; Python 3.14 is recommended.
+Install this repository, not the upstream PyPI package.
 
 [#from-source]
-== From source
+== From this repository
 
-To install PyLaia manually, you need to first clone via:
-
-[,shell]
-----
-git clone git@gitlab.teklia.com:atr/pylaia.git
-----
-
-Then you can install it via pip:
+Clone the private repository using an account with access:
 
 [,shell]
 ----
-pip install .
+git clone https://github.com/tfgdngfxgfb/PyLaia-fork.git
+cd PyLaia-fork
 ----
 
-'''
+Create and activate a Python 3.14 virtual environment. On Windows PowerShell:
 
-Get started with:
+[,powershell]
+----
+py -3.14 -m venv .venv314
+.\.venv314\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu130
+python -m pip install -e '.[dev,test]'
+----
 
-* xref:./development.adoc[Development]
-* xref:usage/index.adoc[Usage]
+For CPU use the index https://download.pytorch.org/whl/cpu instead.
+On Linux use `python3.14 -m venv .venv` and `source .venv/bin/activate`.
+Use `--trainer.accelerator gpu --trainer.devices 1` for GPU or
+`--trainer.accelerator cpu` for CPU. Data loading defaults to zero worker processes.
+
+Greedy decoding is part of the standard installation. Language-model decoding has
+an optional Flashlight backend that lacks Python 3.13/3.14 wheels; see the README
+for this limitation before attempting a source build.
+
+Run `python -m pytest tests` and `python -m pip check` to verify your environment.
+
+Get started with xref:usage/index.adoc[Usage].

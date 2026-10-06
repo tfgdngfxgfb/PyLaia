@@ -1,15 +1,11 @@
-FROM nvidia/cuda:12.3.2-base-ubuntu22.04
+FROM python:3.14-slim
 
-# Add python3 in cuda image
-ENV DEBIAN_FRONTEND=non-interactive
-RUN apt-get update -q -y && apt-get install -q -y --no-install-recommends python3-pip git
-
-# Update pip setuptools
-RUN pip install -U pip setuptools
-
-# Setup pylaia library
+# CPU by default; NVIDIA build: --build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu130
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+ENV PYTHONUTF8=1 PYTHONUNBUFFERED=1
 WORKDIR /src
 COPY laia /src/laia
-COPY LICENSE pyproject.toml MANIFEST.in README.md /src
-
-RUN pip install . --no-cache-dir
+COPY LICENSE pyproject.toml MANIFEST.in README.md /src/
+RUN python -m pip install --no-cache-dir torch==2.14.1 torchvision==0.29.1 --index-url ${TORCH_INDEX_URL} \
+    && python -m pip install --no-cache-dir . \
+    && pylaia-htr-create-model --help > /dev/null

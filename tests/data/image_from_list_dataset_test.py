@@ -1,3 +1,5 @@
+from os.path import normcase
+
 import pytest
 
 from laia.data.image_from_list_dataset import (
@@ -36,7 +38,7 @@ def test_get_img_ids_and_filepaths_with_dirs(tmpdir, caplog):
         expected.append(str(dir / filename))
     ids, filepaths = _get_img_ids_and_filepaths(img_list, img_dirs=img_dirs)
     assert ids == ["foo", "bar"]
-    assert filepaths == expected
+    assert list(map(normcase, filepaths)) == list(map(normcase, expected))
     assert (
         caplog.messages.count(
             f"No image file found for image ID '{img_list[-1]}', ignoring it..."

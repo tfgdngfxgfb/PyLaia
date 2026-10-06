@@ -17,7 +17,7 @@ def test_get_args(tmpdir):
         "--train.checkpoint_k=-1",
         "--scheduler.monitor=va_wer",
         "--scheduler.patience=20",
-        "--trainer.gpus=[1,2]",
+        "--trainer.devices=[1,2]",
     ]
     args = get_args(argv=cmd_args)
     assert isinstance(args, dict)
@@ -30,7 +30,7 @@ def test_get_args(tmpdir):
     assert args["train"].checkpoint_k == -1
     assert args["scheduler"].monitor == "va_wer"
     assert args["scheduler"].patience == 20
-    assert args["trainer"].gpus == [1, 2]
+    assert args["trainer"].devices == [1, 2]
 
 
 @pytest.mark.parametrize(
@@ -60,10 +60,13 @@ def test_entry_point():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    help = proc.stdout.decode()
+    help = proc.stdout.decode("utf-8").replace("\r\n", "\n")
     help = " ".join(help.split())
     assert help.startswith("usage: pylaia-htr-train-ctc")
-    assert "syms img_dirs tr_txt_table va_txt_table" in help
+    assert all(
+        argument in help
+        for argument in ("syms", "img_dirs", "tr_txt_table", "va_txt_table")
+    )
     assert "Mapping from strings to integers" in help
     assert "--common.experiment_dirname EXPERIMENT_DIRNAME" in help
     assert "Any of: 1" in help
@@ -76,7 +79,7 @@ def test_entry_point():
 
 
 expected_config = """syms: null
-img_dirs: []
+img_dirs: null
 tr_txt_table: null
 va_txt_table: null
 common:
@@ -86,10 +89,11 @@ common:
   experiment_dirname: experiment
   monitor: va_cer
   checkpoint: null
+  allow_unsafe_pickle: false
 data:
   batch_size: 8
   color_mode: L
-  num_workers: null
+  num_workers: 0
   reading_order: LTR
 train:
   delimiters:
@@ -127,13 +131,12 @@ def test_config_output():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    config = proc.stdout.decode().strip()
+    config = proc.stdout.decode("utf-8").replace("\r\n", "\n").strip()
     expected = expected_config + "\ntrainer:"
     assert config.startswith(expected)
 
 
 # TODO: fix the issue with jsonargparse
-@pytest.mark.skip(reason="JSONargparse issue")
 def test_config_input(tmpdir):
     config = tmpdir / "config"
     config.write_text(expected_config, "utf-8")

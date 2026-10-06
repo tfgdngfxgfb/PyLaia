@@ -62,7 +62,7 @@ def test_entry_point():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    help = proc.stdout.decode()
+    help = proc.stdout.decode("utf-8").replace("\r\n", "\n")
     help = " ".join(help.split())
     assert help.startswith("usage: pylaia-htr-create-model")
     assert "mapped to integer 0 (required, type: str)" in help
@@ -70,10 +70,9 @@ def test_entry_point():
     assert "Create LaiaCRNN arguments:" in help
     assert "--logging.level {NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL}" in help
     assert "Number of channels of the input images" in help
-    assert (
-        "(type: List[Union[PositiveInt, List[PositiveInt]]], default: [3, 3, 3, 3])"
-        in help
-    )
+    # Python 3.14/jsonargparse can render Union annotations differently.
+    assert "--crnn.cnn_kernel_size" in help
+    assert "default: [3, 3, 3, 3]" in help
     assert "(type: List[PositiveInt], default: [16, 16, 32, 32])" in help
     assert "--crnn.lin_dropout LIN_DROPOUT" in help
     assert "(type: ClosedUnitInterval, default: 0.5)" in help
@@ -90,6 +89,7 @@ common:
   experiment_dirname: experiment
   monitor: va_cer
   checkpoint: null
+  allow_unsafe_pickle: false
 logging:
   fmt: '[%(asctime)s %(levelname)s %(name)s] %(message)s'
   level: INFO
@@ -157,7 +157,7 @@ def test_config_output():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    config = proc.stdout.decode().strip()
+    config = proc.stdout.decode("utf-8").replace("\r\n", "\n").strip()
     assert config == expected_config
 
 

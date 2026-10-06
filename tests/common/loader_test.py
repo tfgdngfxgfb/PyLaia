@@ -40,7 +40,7 @@ def test_object_loader_no_object(tmpdir):
     [
         ({}, KeyError),
         ({"module": __name__}, KeyError),
-        ({"module": "foo"}, ModuleNotFoundError),
+        ({"module": "foo", "name": "Foo"}, ModuleNotFoundError),
         ({"module": __name__, "name": "foo"}, AttributeError),
         ({"module": __name__, "name": "Foo"}, TypeError),
         ({"module": __name__, "name": "Foo", "kwargs": {"bar": 1}}, TypeError),
@@ -49,7 +49,7 @@ def test_object_loader_no_object(tmpdir):
 def test_object_loader_raises(tmpdir, input, exception):
     f = Path(tmpdir) / "test.pth"
     torch.save(input, f)
-    loader = ObjectLoader(f)
+    loader = ObjectLoader(f, allow_unsafe_pickle=True)
     with pytest.raises(exception):
         loader.load()
 
@@ -83,7 +83,7 @@ def test_object_loader_raises(tmpdir, input, exception):
 def test_object_loader(tmpdir, input, expected):
     f = Path(tmpdir) / "test.pth"
     torch.save(input, f)
-    loader = ObjectLoader(f)
+    loader = ObjectLoader(f, allow_unsafe_pickle=True)
     assert loader.load() == expected
 
 
@@ -163,7 +163,7 @@ def test_model_loader_choose_by(tmpdir, input, expected):
         f = Path(tmpdir) / f"test-{i}.ckpt"
         torch.save(None, f)
     assert len(os.listdir(tmpdir)) == n_files
-    assert ModelLoader.choose_by(f"{tmpdir}/{input}") == f"{tmpdir}/{expected}"
+    assert Path(ModelLoader.choose_by(f"{tmpdir}/{input}")) == Path(tmpdir) / expected
 
 
 def test_model_loader_find_best(tmpdir):
@@ -178,7 +178,7 @@ def test_model_loader_find_best(tmpdir):
                 dirpath=tmpdir, save_top_k=-1, filename="{epoch}"
             )
         ],
-        checkpoint_callback=True,
+        enable_checkpointing=True,
         max_epochs=3,
     )
     trainer.fit(DummyEngine(), datamodule=DummyMNIST())
@@ -190,7 +190,7 @@ def test_model_loader_find_best(tmpdir):
         dirpath=tmpdir, save_top_k=-1, monitor=monitor, mode="max", filename="{epoch}"
     )
     trainer = DummyTrainer(
-        default_root_dir=tmpdir, callbacks=[mc], checkpoint_callback=True, max_epochs=3
+        default_root_dir=tmpdir, callbacks=[mc], enable_checkpointing=True, max_epochs=3
     )
     trainer.fit(DummyEngine(), datamodule=DummyMNIST())
     assert (
@@ -218,7 +218,7 @@ def test_model_loader_prepare_checkpoint(tmpdir):
                 filename="{epoch}",
             )
         ],
-        checkpoint_callback=True,
+        enable_checkpointing=True,
         max_epochs=2,
     )
     trainer.fit(DummyEngine(), datamodule=DummyMNIST())
@@ -229,10 +229,10 @@ def test_model_loader_prepare_checkpoint(tmpdir):
     # direct path
     assert ModelLoader.prepare_checkpoint(expected, exp_dirpath, monitor) == expected
     # direct path outside of exp_dirpath
-    shutil.copy(expected, "/tmp")
-    assert (
-        ModelLoader.prepare_checkpoint("/tmp/epoch=0.ckpt", exp_dirpath, monitor)
-        == "/tmp/epoch=0.ckpt"
+    outside = tmpdir / "outside.ckpt"
+    shutil.copy(expected, outside)
+    assert ModelLoader.prepare_checkpoint(str(outside), exp_dirpath, monitor) == str(
+        outside
     )
     # filename
     assert (
@@ -245,6 +245,6 @@ def test_model_loader_prepare_checkpoint(tmpdir):
     )
     # failures
     with pytest.raises(AssertionError, match="Could not find a valid checkpoint in"):
-        ModelLoader.prepare_checkpoint("", tmpdir, monitor)
+        ModelLoader.prepare_checkpoint("", tmpdir / "missing", monitor)
     with pytest.raises(AssertionError, match="Could not find the checkpoint"):
         ModelLoader.prepare_checkpoint("?", exp_dirpath, monitor)

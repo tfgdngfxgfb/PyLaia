@@ -26,7 +26,7 @@ class SymbolsTable:
         self._sym2val, self._val2sym = dict(), dict()
 
     def load(self, f: Union[str, Path]):
-        f = open(f)
+        f = open(f, encoding="utf-8")
         self.clear()
         try:
             lines = f.read().splitlines()
@@ -48,7 +48,7 @@ class SymbolsTable:
             self.add(symbol, int(index))
 
     def save(self, f: Union[str, Path]):
-        f = open(f, "w")
+        f = open(f, "w", encoding="utf-8")
         max_len = max(len(s) for s in self._sym2val)
         for v, s in self._val2sym.items():
             f.write(f"{s:>{max_len}} {v}\n")

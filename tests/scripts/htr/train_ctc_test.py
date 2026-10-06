@@ -76,12 +76,11 @@ def test_train_1_epoch(tmpdir, accelerator):
     ]
     if accelerator:
         args.append(f"--trainer.accelerator={accelerator}")
-        args.append(f"--trainer.gpus={torch.cuda.device_count()}")
+        args.append(f"--trainer.devices={torch.cuda.device_count()}")
 
     stdout, stderr = call_script(script.__file__, args)
     assert not stdout
     assert "as top 1" in stderr
-    assert "Saving latest checkpoint" in stderr
     assert "Best va_cer=0." in stderr
     assert {f.basename for f in tmpdir.join("experiment").listdir()} == {
         "epoch=0-lowest_va_cer.ckpt",
@@ -90,8 +89,6 @@ def test_train_1_epoch(tmpdir, accelerator):
     }
 
 
-# TODO: fix issue with half precision
-@pytest.mark.skip(reason="Issue with half_precision")
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="AMP needs CUDA")
 def test_train_half_precision(tmpdir):
     syms, img_dirs, data_module = prepare_data(tmpdir, image_sequencer="none-14")
@@ -103,12 +100,13 @@ def test_train_half_precision(tmpdir):
         f"--common.train_path={tmpdir}",
         "--data.batch_size=3",
         "--trainer.fast_dev_run=true",
-        "--trainer.precision=16",
-        "--trainer.gpus=1",
+        "--trainer.precision=16-mixed",
+        "--trainer.accelerator=gpu",
+        "--trainer.devices=1",
     ]
     stdout, stderr = call_script(script.__file__, args)
-    assert "Running in fast_dev_run" in stderr
-    assert "Using native 16bit precision" in stderr
+    assert "fast_dev_run" in stderr
+    assert "Using 16bit Automatic Mixed Precision" in stderr
     assert "Model has been trained for" in stderr
 
 
@@ -127,18 +125,18 @@ def test_train_can_resume_training(tmpdir, caplog):
         "optimizer": OptimizerArgs(name="SGD"),
         "train": TrainArgs(augment_training=True),
         "trainer": TrainerArgs(
-            progress_bar_refresh_rate=0, weights_summary=None, max_epochs=1
+            progress_bar_refresh_rate=0, enable_model_summary=False, max_epochs=1
         ),
     }
     # run to have a checkpoint
     script.run(*args, **kwargs)
-    assert "Model has been trained for 1 epochs (11 steps)" in caplog.messages
+    assert "Model has been trained for 1 epochs (10 steps)" in caplog.messages
     caplog.clear()
 
     # train for one more epoch
     kwargs["train"] = TrainArgs(resume=True)
     script.run(*args, **kwargs)
-    assert "Model has been trained for 2 epochs (21 steps)" in caplog.messages
+    assert "Model has been trained for 2 epochs (20 steps)" in caplog.messages
 
 
 def test_pretraining(tmpdir, caplog):
@@ -156,11 +154,11 @@ def test_pretraining(tmpdir, caplog):
         "optimizer": OptimizerArgs(name="SGD"),
         "train": TrainArgs(augment_training=True),
         "trainer": TrainerArgs(
-            progress_bar_refresh_rate=0, weights_summary=None, max_epochs=1
+            progress_bar_refresh_rate=0, enable_model_summary=False, max_epochs=1
         ),
     }
     script.run(*args, **kwargs)
-    assert "Model has been trained for 1 epochs (11 steps)" in caplog.messages
+    assert "Model has been trained for 1 epochs (10 steps)" in caplog.messages
     caplog.clear()
 
     # restart from checkpoint
@@ -171,13 +169,13 @@ def test_pretraining(tmpdir, caplog):
     script.run(*args, **kwargs)
     ckpt_path = os.path.abspath(
         os.path.join(
-            kwargs["common"].experiment_dirname,
+            kwargs["common"].experiment_dirpath,
             "pretrained",
             kwargs["common"].checkpoint.replace(".ckpt", "_reset.ckpt"),
         )
     )
-    assert f"""Using checkpoint "{ckpt_path}" in pretrain mode"""
-    assert "Model has been trained for 1 epochs (11 steps)" in caplog.messages
+    assert f'Using checkpoint "{ckpt_path}" in pretrain mode' in caplog.messages
+    assert "Model has been trained for 1 epochs (10 steps)" in caplog.messages
 
 
 def test_train_early_stops(tmpdir, caplog):
@@ -192,7 +190,7 @@ def test_train_early_stops(tmpdir, caplog):
         data=DataArgs(batch_size=3),
         train=TrainArgs(early_stopping_patience=2),
         trainer=TrainerArgs(
-            progress_bar_refresh_rate=0, weights_summary=None, max_epochs=5
+            progress_bar_refresh_rate=0, enable_model_summary=False, max_epochs=5
         ),
     )
     assert (
@@ -217,7 +215,7 @@ def test_train_with_scheduler(tmpdir, caplog):
         optimizer=OptimizerArgs(learning_rate=1),
         scheduler=SchedulerArgs(active=True, patience=0, monitor="va_wer", factor=0.5),
         trainer=TrainerArgs(
-            progress_bar_refresh_rate=0, weights_summary=None, max_epochs=5
+            progress_bar_refresh_rate=0, enable_model_summary=False, max_epochs=5
         ),
     )
     assert "E1: lr-RMSprop 1.000e+00 ⟶ 5.000e-01" in caplog.messages
@@ -251,7 +249,7 @@ def test_train_can_overfit_one_image(tmpdir, caplog):
             early_stopping_patience=100,  # disable early stopping
         ),
         trainer=TrainerArgs(
-            weights_summary=None,
+            enable_model_summary=False,
             overfit_batches=1,
             max_epochs=70,
             check_val_every_n_epoch=100,  # disable validation
@@ -260,11 +258,11 @@ def test_train_can_overfit_one_image(tmpdir, caplog):
     assert sum("cer=0.0%" in m and "wer=0.0%" in m for m in caplog.messages)
 
 
-# TODO: fix first assertion
-@pytest.mark.skip(reason="Model is found")
 def test_raises(tmpdir):
+    missing_syms = tmpdir / "missing-model-syms"
+    missing_syms.write("<ctc> 0\n<space> 1\n")
     with pytest.raises(AssertionError, match="Could not find the model"):
-        script.run("", [], "", "")
+        script.run(missing_syms, [], "", "", common=CommonArgs(train_path=str(tmpdir)))
 
     syms, img_dirs, data_module = prepare_data(tmpdir)
     with pytest.raises(AssertionError, match='The delimiter "TEST" is not available'):

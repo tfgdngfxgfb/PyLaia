@@ -32,7 +32,6 @@ class HTREngineModule(EngineModule):
         )
         self.delimiters = delimiters
         self.decoder = CTCGreedyDecoder()
-        self.save_hyperparameters()
 
     def training_step(self, batch: Any, *args, **kwargs):
         result = super().training_step(batch, *args, **kwargs)

@@ -30,9 +30,9 @@ def test_learning_rate(tmpdir, num_processes):
         default_root_dir=tmpdir,
         max_epochs=3,
         callbacks=[LearningRate()],
-        accelerator="ddp_cpu" if num_processes > 1 else None,
-        num_processes=num_processes,
-        plugins=[DummyLoggingPlugin(log_filepath)],
+        accelerator="cpu",
+        devices=num_processes,
+        strategy=DummyLoggingPlugin(log_filepath),
     )
     trainer.fit(__TestEngine(), datamodule=DummyMNIST())
 

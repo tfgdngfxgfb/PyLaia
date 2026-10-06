@@ -7,7 +7,7 @@ from jsonargparse.typing import NonNegativeInt
 import laia.common.logging as log
 from laia.common.arguments import CommonArgs, TrainArgs
 from laia.common.loader import ModelLoader
-from laia.scripts.htr import common_main
+from laia.scripts.htr import common_main, create_parser
 from laia.utils import ImageLabelsStats, Split, Statistics, SymbolsTable
 
 
@@ -24,12 +24,15 @@ def run(
 ):
     # Check model
     loader = ModelLoader(
-        common.train_path, filename=common.model_filename, device="cpu"
+        common.train_path,
+        filename=common.model_filename,
+        device="cpu",
+        allow_unsafe_pickle=common.allow_unsafe_pickle,
     )
     model = loader.load()
-    assert (
-        model is not None
-    ), "Could not find the model. Have you run pylaia-htr-create-model?"
+    assert model is not None, (
+        "Could not find the model. Have you run pylaia-htr-create-model?"
+    )
 
     # Where all issues will be stored
     dataset_issues = dict()
@@ -81,7 +84,7 @@ def run(
 
 
 def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
-    parser = jsonargparse.ArgumentParser()
+    parser = create_parser("pylaia-htr-dataset-validate")
     parser.add_argument(
         "--config", action=jsonargparse.ActionConfigFile, help="Configuration file"
     )
@@ -96,7 +99,6 @@ def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
     parser.add_argument(
         "img_dirs",
         type=List[str],
-        default=[],
         help="Directories containing segmented line images",
     )
     parser.add_argument(
@@ -134,7 +136,7 @@ def get_args(argv: Optional[List[str]] = None) -> Dict[str, Any]:
     parser.add_class_arguments(TrainArgs, "train")
     parser.add_function_arguments(log.config, "logging")
 
-    args = parser.parse_args(argv, with_meta=False).as_dict()
+    args = parser.parse_args(argv).clone(with_meta=False).as_dict()
     args["common"] = CommonArgs(**args["common"])
     args["train"] = TrainArgs(**args["train"])
     return args
