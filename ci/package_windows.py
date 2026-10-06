@@ -16,12 +16,12 @@ def main():
     with (ROOT / "pyproject.toml").open("rb") as stream:
         project = tomllib.load(stream)["project"]
     version = project["version"]
-    name = f"PyLaia-Fork-{version.replace('+', '-')}-Windows-x64"
+    name = f"PyLaia-{version.replace('+', '-')}-Windows-x64"
     destination = ROOT / "dist" / name
     if destination.exists():
         raise RuntimeError(f"Build folder already exists: {destination}")
     destination.mkdir(parents=True)
-    wheel_name = f"pylaia_fork-{version}-py3-none-any.whl"
+    wheel_name = f"pylaia-{version}-py3-none-any.whl"
     (destination / "wheels").mkdir()
     shutil.copy2(ROOT / "dist" / wheel_name, destination / "wheels" / wheel_name)
     for tag in ("cp313", "cp314"):
@@ -42,7 +42,7 @@ def main():
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
     for source, target in (
-        ("ci/install-windows.ps1", "Install-PyLaia-Fork.ps1"),
+        ("ci/install-windows.ps1", "Install-PyLaia.ps1"),
         ("ci/verify_installation.py", "verify-installation.py"),
         ("ci/build_language_model.py", "build-tools/build_language_model.py"),
         ("ci/build-language-model.ps1", "build-tools/build-language-model.ps1"),
@@ -55,7 +55,7 @@ def main():
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / source, target_path)
     manifest = {
-        "product": "PyLaia Fork — independent private build",
+        "product": "PyLaia",
         "distribution": project["name"],
         "version": version,
         "pylaia_wheel": wheel_name,

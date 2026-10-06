@@ -9,13 +9,8 @@ from laia import __version__, get_installed_versions
 
 
 def create_parser(command, **kwargs):
-    name = command
-    if "pylaia-fork-htr-" in sys.argv[0]:
-        name = command.replace("pylaia-htr-", "pylaia-fork-htr-", 1)
-    parser = jsonargparse.ArgumentParser(prog=name, **kwargs)
-    parser.add_argument(
-        "--version", action="version", version=f"PyLaia Fork {__version__}"
-    )
+    parser = jsonargparse.ArgumentParser(prog=command, **kwargs)
+    parser.add_argument("--version", action="version", version=f"PyLaia {__version__}")
     return parser
 
 
@@ -31,7 +26,7 @@ def common_main(args: Dict[str, Any]) -> Dict[str, Any]:
             args["common"].experiment_dirpath, logging["filepath"]
         )
     log.config(**logging)
-    log.info(f"PyLaia Fork {__version__} — independent build")
+    log.info(f"PyLaia {__version__}")
     log.info(f"Arguments: {args}")
     versions = get_installed_versions()
     if versions:

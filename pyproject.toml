@@ -3,7 +3,7 @@ requires = ["setuptools>=83"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pylaia-fork"
+name = "pylaia"
 version = "1.2.0+fork.20261007"
 keywords = ["HTR OCR python"]
 readme = "README.md"
@@ -71,12 +71,6 @@ wandb = ["wandb==0.30.0"]
 language-model = ["torchaudio==2.11.0", "flashlight-text==0.0.7", "kenlm==0.3.0"]
 
 [project.scripts]
-pylaia-fork-htr-create-model = "laia.scripts.htr.create_model:main"
-pylaia-fork-htr-decode-ctc = "laia.scripts.htr.decode_ctc:main"
-pylaia-fork-htr-netout = "laia.scripts.htr.netout:main"
-pylaia-fork-htr-train-ctc = "laia.scripts.htr.train_ctc:main"
-pylaia-fork-htr-dataset-validate = "laia.scripts.htr.dataset.validate:main"
-# Compatibility aliases for existing configs and scripts.
 pylaia-htr-create-model = "laia.scripts.htr.create_model:main"
 pylaia-htr-decode-ctc = "laia.scripts.htr.decode_ctc:main"
 pylaia-htr-netout = "laia.scripts.htr.netout:main"

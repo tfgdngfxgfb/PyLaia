@@ -1,8 +1,9 @@
-PyLaia Fork — uavhengig, privat Windows-bygg
+PyLaia 1.2.0+fork.20261007 — privat Windows-bygg
 Versjon 1.2.0+fork.20261007. Dette er ikke den offisielle PyLaia-utgaven.
 
 Innhold:
-- PyLaia Fork med eget pakkenavn og egne pylaia-fork-htr-* kommandoer.
+- Opprinnelig pakkenavn pylaia, import laia og pylaia-htr-* kommandoer.
+- Versjonsnummeret skiller bygget fra offisiell PyLaia.
 - Python 3.14.8 og 3.13.16, kun brukt i et isolert miljø.
 - Ferdigbygde Flashlight 0.0.7+pylaia1 og KenLM 0.3.0+pylaia1 for begge Python-versjoner.
 - Endret kildekode og opprinnelige lisenser i sources/, samt byggeverktøy.
@@ -12,9 +13,9 @@ Installasjon:
 1. Pakk ut hele ZIP-filen. Ikke kjør installasjonen direkte fra ZIP-visningen.
 2. Åpne PowerShell i mappen med denne filen.
 3. Med NVIDIA-grafikkort og oppdatert driver:
-   .\Install-PyLaia-Fork.ps1
+   .\Install-PyLaia.ps1
    Uten NVIDIA-grafikkort:
-   .\Install-PyLaia-Fork.ps1 -TorchBuild CPU
+   .\Install-PyLaia.ps1 -TorchBuild CPU
 
 Standard er Python 3.14. For Python 3.13, legg til -PythonVersion 3.13.
 Installasjonen oppretter en ny pylaia-env-3.14 (eller 3.13) ved siden av denne filen.
@@ -31,12 +32,13 @@ Installasjonen kontrollerer lokale filers kontrollsummer, avhengigheter, språkm
 dekoding og (ved CUDA) at grafikkortet faktisk kan brukes.
 
 Etter installasjon:
-  .\pylaia-env-3.14\Scripts\pylaia-fork-htr-create-model.exe --version
-  .\pylaia-env-3.14\Scripts\pylaia-fork-htr-create-model.exe --help
+  .\pylaia-env-3.14\Scripts\pylaia-htr-create-model.exe --version
+  .\pylaia-env-3.14\Scripts\pylaia-htr-create-model.exe --help
 
-Andre kommandoer: pylaia-fork-htr-train-ctc, pylaia-fork-htr-decode-ctc,
-pylaia-fork-htr-netout og pylaia-fork-htr-dataset-validate.
-De eldre pylaia-htr-* navnene finnes også som kompatibilitetsaliaser.
+Andre kommandoer: pylaia-htr-train-ctc, pylaia-htr-decode-ctc,
+pylaia-htr-netout og pylaia-htr-dataset-validate.
+Ikke installer dette bygget og offisiell PyLaia i samme Python-miljø.
+Gamle versjonskrav, treningsinnstillinger og modellfiler kan trenge tilpasning.
 Dette er et kommandolinjeverktøy, ikke en ny grafisk OCR-app.
 
 Modellfiler fra ukjente kilder bør ikke brukes. Tryggere innlasting er standard.

@@ -1,12 +1,12 @@
-# PyLaia Fork — private independent build
+# PyLaia 1.2.0+fork.20261007
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
-Package identity: **`pylaia-fork`**, version **`1.2.0+fork.20261007`**.
-Use the `pylaia-fork-htr-*` commands; `pylaia-htr-*` aliases remain for existing scripts.
-`pylaia-fork-htr-create-model --version` identifies this independent build.
+Package identity remains **`pylaia`**, with the original `import laia` and
+`pylaia-htr-*` commands. Only the version **`1.2.0+fork.20261007`** identifies this
+independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
 
@@ -16,7 +16,11 @@ Use the `pylaia-fork-htr-*` commands; `pylaia-htr-*` aliases remain for existing
 - Python 3.15 is not supported by this release.
 
 Dependencies are pinned in [pyproject.toml](pyproject.toml). Do not install the unrelated
-upstream PyPI package with `pip install pylaia`; install this checkout.
+upstream PyPI package with `pip install pylaia`; install this checkout or the supplied
+wheel instead. Use a separate environment: this build replaces the same package and
+cannot be installed alongside upstream PyLaia. Existing scripts keep their import and
+command names, but old dependency pins, training settings, and model formats may need
+adjustment; unchanged names do not guarantee compatibility with every external program.
 
 ## Install on Windows (PowerShell)
 

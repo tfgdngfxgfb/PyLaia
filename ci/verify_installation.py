@@ -91,7 +91,7 @@ def main():
             BasicLoader().load(path / "weights.pt")["weight"], torch.arange(4)
         )
     print(
-        f"Python {sys.version.split()[0]} / PyLaia Fork {version('pylaia-fork')} / PyTorch {torch.__version__}"
+        f"Python {sys.version.split()[0]} / PyLaia {version('pylaia')} / PyTorch {torch.__version__}"
     )
     print(
         f"Flashlight {version('flashlight-text')} / KenLM {version('kenlm')}: decoding verified"

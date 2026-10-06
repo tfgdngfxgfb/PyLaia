@@ -1,4 +1,4 @@
-# Security notes — PyLaia Fork
+# Security notes — PyLaia 1.2.0+fork.20261007
 
 Review date: 2026-10-07. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.

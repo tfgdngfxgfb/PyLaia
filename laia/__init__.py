@@ -16,7 +16,7 @@ import laia.utils
 __all__ = ["__version__", "__root__", "get_installed_versions"]
 __lib__ = Path(__file__).parent
 __root__ = __lib__.parent
-__version__ = version("pylaia-fork")
+__version__ = version("pylaia")
 
 try:
     git = which("git")
@@ -40,13 +40,11 @@ except (subprocess.CalledProcessError, OSError):
 def get_installed_versions() -> List[str]:
     from packaging.requirements import Requirement
 
-    requirements = [
-        Requirement(req) for req in distribution("pylaia-fork").requires or []
-    ]
+    requirements = [Requirement(req) for req in distribution("pylaia").requires or []]
     versions = sorted(
         f"{req.name}=={version(req.name)}"
         for req in requirements
         if req.marker is None or req.marker.evaluate()
     )
-    versions.append(f"pylaia-fork=={__version__}")
+    versions.append(f"pylaia=={__version__}")
     return versions
