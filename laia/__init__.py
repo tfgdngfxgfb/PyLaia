@@ -12,6 +12,11 @@ import laia.loggers
 import laia.losses
 import laia.nn
 import laia.utils
+from laia.common.compatibility import (
+    register_cudnn_shutdown_cleanup as _register_cudnn_shutdown_cleanup,
+)
+
+_register_cudnn_shutdown_cleanup()
 
 __all__ = ["__version__", "__root__", "get_installed_versions"]
 __lib__ = Path(__file__).parent

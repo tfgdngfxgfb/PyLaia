@@ -30,6 +30,11 @@ This is a targeted engineering review, not a formal penetration test or guarante
 - Project runtimes updated to CPython 3.13.16 and 3.14.8, downloaded using Python's
   installation manager with successful official index-signature verification.
   Global Python installations and system PATH were not changed.
+- Windows CUDA interpreter shutdown releases PyTorch's RNN dropout cache using
+  the pinned version's `_C._cudnn_clear_dropout_state()` binding. This avoids a
+  reproduced native exit failure without disabling cuDNN or changing dropout.
+  The handler does not initialize CUDA, alter computation or force a success code;
+  it is only registered on Windows CUDA builds. No external DLLs are substituted.
 
 ## Checks
 
@@ -42,8 +47,19 @@ This is a targeted engineering review, not a formal penetration test or guarante
   existing Git history. Staged changes are checked again before publication.
 - Safe-loader regression tests, CPU/CUDA training/resume/fine-tuning workflow,
   and real language-model decoding on both supported Python versions.
-- Full local suite: Python 3.13.16 CPU — 1170 passed, 7 skipped, 2 expected failures;
-  Python 3.14.8 CUDA — 1215 passed, 5 skipped, 2 expected failures. Zero failures.
+- Final full local CPU suite: Python 3.13.16 — 1177 passed, 8 skipped, 2 expected
+  failures; process exit status 0. The pre-fix Python 3.14.8 CUDA run reported
+  1217 passed, 5 skipped and 2 expected failures but terminated with `0xC0000409`.
+  That was not a successful full-run validation. The shutdown cleanup now passes
+  all 28 targeted compatibility/model tests and exits with status 0, keeping
+  cuDNN enabled and dropout unchanged. A separate-process test checks real GPU
+  forward/backward and interpreter shutdown, not just test assertions.
+- After the targeted fix, the full Python 3.14.8/CUDA run also exits with status 0:
+  1223 passed, 5 skipped and 2 expected failures, with cuDNN enabled. No tests failed.
+- Fresh Windows bundle installs pass dependency checks and native-decoder smoke
+  tests on Python 3.13.16/CPU and 3.14.8/CUDA. Both fresh installs use setuptools
+  84.0.0 and have no known advisories for auditable dependencies. Base releases for
+  local Torch/native wheel versions were audited separately again.
 - Installers create isolated environments, refuse to overwrite an existing
   installation folder and verify bundled-file checksums. Checksums detect
   corruption, not an attacker replacing both the files and manifest. The ZIP is
@@ -63,6 +79,9 @@ includes Flashlight/KenLM locally and is not a fully offline PyTorch distributio
 Docker, Linux native language-model builds, multi-GPU training, free-threaded
 CPython and Python 3.15 have not been verified by the local Windows run.
 Inherited tests depending on unavailable external pretrained files remain skipped.
+The cuDNN shutdown fix relies on an internal API of the pinned Torch release.
+Retest its native cleanup and process exit when upgrading Torch. It is not a
+guarantee for every driver, background-thread lifecycle or external integration.
 
 Report sensitive findings privately to this repository's owner; do not include
 credentials, private model files or training data in a public issue.

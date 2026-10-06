@@ -1,6 +1,11 @@
 PyLaia 1.2.0+fork.20261007 — privat Windows-bygg
 Versjon 1.2.0+fork.20261007. Dette er ikke den offisielle PyLaia-utgaven.
 
+En målrettet Windows-retting rydder PyTorchs cuDNN-dropout-cache ved avslutning,
+før GPU-bibliotekene lukkes. Den unngår et gjenskapt avslutningskrasj.
+cuDNN er fortsatt aktivert, og dropout/modellinnstillinger endres ikke.
+Ingen PyTorch- eller cuDNN-filer erstattes, og ingen feilstatus skjules.
+
 Innhold:
 - Opprinnelig pakkenavn pylaia, import laia og pylaia-htr-* kommandoer.
 - Versjonsnummeret skiller bygget fra offisiell PyLaia.
@@ -13,11 +18,12 @@ Installasjon:
 1. Pakk ut hele ZIP-filen. Ikke kjør installasjonen direkte fra ZIP-visningen.
 2. Åpne PowerShell i mappen med denne filen.
 3. Med NVIDIA-grafikkort og oppdatert driver:
-   .\Install-PyLaia.ps1
+   .\Install-PyLaia.ps1 -TorchBuild CUDA
    Uten NVIDIA-grafikkort:
    .\Install-PyLaia.ps1 -TorchBuild CPU
 
 Standard er Python 3.14. For Python 3.13, legg til -PythonVersion 3.13.
+Uten -TorchBuild velger installasjonsprogrammet CUDA.
 Installasjonen oppretter en ny pylaia-env-3.14 (eller 3.13) ved siden av denne filen.
 Eksisterende installasjonsmapper overskrives ikke. Du kan velge -InstallationPath.
 Ingen global Python, filtilknytning eller system-PATH endres.

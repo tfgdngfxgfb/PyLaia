@@ -12,7 +12,7 @@ independent build; check it with `pylaia-htr-create-model --version`.
 
 - Python **3.14.8** (recommended), also Python **3.13.16**.
 - PyTorch **2.14.1**, TorchVision **0.29.1**, Lightning **2.6.6**.
-- CPU, or NVIDIA CUDA 13.0 with a compatible driver.
+- CPU, or NVIDIA CUDA 13.0 with a compatible driver and cuDNN enabled.
 - Python 3.15 is not supported by this release.
 
 Dependencies are pinned in [pyproject.toml](pyproject.toml). Do not install the unrelated
@@ -109,6 +109,24 @@ patched sources/licenses, isolated Python runtimes and an installer; other avail
 dependencies download from official PyTorch/PyPI sources during installation.
 This bundle is not fully offline. Linux language-model source builds are not verified.
 
+### Windows cuDNN shutdown compatibility
+
+The official Torch 2.14.1+cu130 build on this Windows machine could complete
+multi-layer LSTM/dropout computations and then terminate at interpreter shutdown
+with status `0xC0000409`. This was reproduced with `torch.nn.LSTM` alone, without
+PyLaia, Flashlight or pytest. Ordinary GPU-memory cleanup did not fix it.
+
+This build registers a Windows/CUDA exit handler that calls PyTorch's own
+`torch._C._cudnn_clear_dropout_state()` while the CUDA libraries are still usable.
+It releases the process-lifetime RNN dropout cache before DLL unloading, only if
+CUDA was already initialized. Importing PyLaia does not initialize a GPU.
+**cuDNN remains enabled; dropout, model weights, training math and command names
+are unchanged.** There is no forced-success exit or replacement of Torch/cuDNN DLLs.
+The native cleanup binding is internal to the pinned PyTorch version and covered
+by unit tests plus a subprocess regression that checks normal exit status with
+multi-layer cuDNN LSTM dropout. The previously crashing model test group now exits
+successfully. See [PyTorch's cache cleanup implementation](https://github.com/pytorch/pytorch/blob/v2.14.1/aten/src/ATen/native/cudnn/RNN.cpp#L2704).
+
 ## Development and verification
 
 ```powershell
@@ -126,9 +144,13 @@ no external trained model is needed for the new workflow test.
 GitHub Actions checks Python 3.13/3.14 on Windows/Linux. There is no automatic
 PyPI, public documentation, coverage upload, or Docker-registry publishing.
 Windows language-model builds/tests and dependency advisory checks are also included.
-The full local Windows run passes 1170 tests on Python 3.13.16/CPU and 1215 on
-Python 3.14.8/CUDA, with no failures (unavailable pretrained/GPU tests are skipped
-where appropriate; two inherited expected-failure cases remain).
+The final local Windows runs both exit successfully (status 0): Python 3.13.16/CPU
+has 1177 passed, 8 skipped and 2 expected failures; Python 3.14.8/CUDA has
+1223 passed, 5 skipped and 2 expected failures. cuDNN remains enabled and the
+multi-layer LSTM/dropout shutdown regression passes. No tests failed.
+Separate native-decoder and training workflow tests exit successfully on both
+versions. GitHub's Windows/Linux CPU and Windows native-language-model checks pass
+on both Python versions. Unavailable pretrained-file tests remain skipped.
 
 The Dockerfile uses Python 3.14 and CPU PyTorch by default. For NVIDIA,
 build with `--build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu130`

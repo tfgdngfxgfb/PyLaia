@@ -1,0 +1,84 @@
+import os
+import subprocess
+import sys
+from unittest.mock import Mock
+
+import pytest
+import torch
+
+from laia.common import compatibility
+
+
+def configure_runtime(monkeypatch, *, platform="win32", cuda="13.0"):
+    monkeypatch.setattr(compatibility, "_cleanup_registered", False)
+    monkeypatch.setattr(compatibility, "platform", platform)
+    monkeypatch.setattr(torch.version, "cuda", cuda)
+    callback = Mock()
+    cleanup = Mock()
+    monkeypatch.setattr(compatibility.atexit, "register", callback)
+    monkeypatch.setattr(torch._C, "_cudnn_clear_dropout_state", cleanup, raising=False)
+    return callback, cleanup
+
+
+@pytest.mark.parametrize("platform,cuda", [("linux", "13.0"), ("win32", None)])
+def test_no_cleanup_for_other_platforms_or_cpu(monkeypatch, platform, cuda):
+    register, cleanup = configure_runtime(monkeypatch, platform=platform, cuda=cuda)
+    compatibility.register_cudnn_shutdown_cleanup()
+    register.assert_not_called()
+    cleanup.assert_not_called()
+
+
+def test_cleanup_does_not_initialize_cuda(monkeypatch):
+    register, cleanup = configure_runtime(monkeypatch)
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: False)
+    compatibility.register_cudnn_shutdown_cleanup()
+    register.call_args.args[0]()
+    cleanup.assert_not_called()
+
+
+def test_cleanup_only_at_exit_and_registered_once(monkeypatch):
+    register, cleanup = configure_runtime(monkeypatch)
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: True)
+    compatibility.register_cudnn_shutdown_cleanup()
+    compatibility.register_cudnn_shutdown_cleanup()
+    register.assert_called_once()
+    cleanup.assert_not_called()
+    register.call_args.args[0]()
+    cleanup.assert_called_once()
+
+
+def test_missing_native_cleanup_is_not_called(monkeypatch):
+    register, _ = configure_runtime(monkeypatch)
+    monkeypatch.delattr(torch._C, "_cudnn_clear_dropout_state")
+    compatibility.register_cudnn_shutdown_cleanup()
+    register.assert_not_called()
+
+
+@pytest.mark.skipif(
+    sys.platform != "win32" or not torch.cuda.is_available(),
+    reason="Windows CUDA shutdown regression",
+)
+def test_multilayer_cudnn_lstm_exits_normally():
+    code = """
+import torch
+import laia
+assert torch.backends.cudnn.enabled
+model = torch.nn.LSTM(64, 128, 4, bidirectional=True, dropout=0.5).cuda()
+inputs = torch.randn(8, 2, 64, device="cuda", requires_grad=True)
+model(inputs)[0].sum().backward()
+assert torch.backends.cudnn.enabled
+assert model.dropout == 0.5
+assert inputs.grad is not None
+print("cuDNN enabled; dropout and GPU backward unchanged")
+"""
+    environment = dict(os.environ, OMP_NUM_THREADS="1", MKL_NUM_THREADS="1")
+    result = subprocess.run(
+        [sys.executable, "-I", "-X", "faulthandler", "-c", code],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        env=environment,
+    )
+    assert result.returncode == 0, (result.returncode, result.stdout, result.stderr)
+    assert "cuDNN enabled; dropout and GPU backward unchanged" in result.stdout

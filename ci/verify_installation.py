@@ -59,6 +59,12 @@ def main():
         )
     if args.require_cuda:
         assert (torch.ones(2, device="cuda") * 2).sum().item() == 4
+        assert torch.backends.cudnn.enabled
+        model = torch.nn.LSTM(16, 16, 2, bidirectional=True, dropout=0.5).cuda()
+        inputs = torch.randn(4, 2, 16, device="cuda", requires_grad=True)
+        model(inputs)[0].sum().backward()
+        assert inputs.grad is not None
+        assert model.dropout == 0.5 and torch.backends.cudnn.enabled
     features = torch.tensor(
         [
             [[-2.1, -1.3, -4.1, -4.2, -5.0, -5.1, -0.2, -4.2, -5.2, -1.2]],
