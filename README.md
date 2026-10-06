@@ -25,7 +25,7 @@ py -3.14 -m venv .venv314
 .\.venv314\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 # NVIDIA GPU:
-python -m pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu130
+python -m pip install --no-deps torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu130
 python -m pip install -e '.[test,dev]'
 ```
 

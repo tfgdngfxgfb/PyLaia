@@ -16,6 +16,10 @@ This is a targeted engineering review, not a formal penetration test or guarante
   `--common.allow_unsafe_pickle=true`. This permits arbitrary code execution and
   must never be enabled for files from an unknown or unverified source.
 - Removed the inherited test-suite TLS-certificate bypass.
+- Fresh-install CI caught an older `setuptools` from the PyTorch wheel index
+  (PYSEC-2025-49 / PYSEC-2026-3447). Only Torch/TorchVision are fetched from that
+  index; other dependencies resolve from PyPI. Setuptools is pinned to 84.0.0,
+  and builds require at least 83, preventing that vulnerable version from remaining.
 - GitHub CI has read-only repository permissions and actions pinned to verified
   commit IDs. The old GitLab/public publishing pipeline was removed; it remains
   recoverable in Git history. No automatic public package or documentation upload.

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77"]
+requires = ["setuptools>=83"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -24,6 +24,7 @@ classifiers = [
 ]
 requires-python = ">=3.13,<3.15"
 dependencies = [
+    "setuptools==84.0.0",
     "imagesize==2.0.1",
     "jsonargparse[signatures]==4.52.0",
     "matplotlib==3.11.2",

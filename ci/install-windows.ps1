@@ -24,7 +24,7 @@ $taskPython = Join-Path $InstallationPath 'Scripts\python.exe'
 $taskTorchIndex = 'https://download.pytorch.org/whl/cpu'
 if ($TorchBuild -eq 'CUDA') { $taskTorchIndex = 'https://download.pytorch.org/whl/cu130' }
 Write-Host ('Installing official PyTorch packages (' + $TorchBuild + ')')
-& $taskPython -m pip install 'torch==2.14.1' 'torchvision==0.29.1' --index-url $taskTorchIndex
+& $taskPython -m pip install --no-deps 'torch==2.14.1' 'torchvision==0.29.1' --index-url $taskTorchIndex
 if ($LASTEXITCODE -ne 0) { throw 'PyTorch installation failed.' }
 Write-Host 'Installing local Flashlight/KenLM and PyLaia'
 $taskWheelFolder = Join-Path $PSScriptRoot ('wheels\' + $taskTag)
