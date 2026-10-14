@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 import pytorch_lightning as pl
 
@@ -24,6 +26,10 @@ class __TestCallback(pl.Callback):
 
 # TODO: fix test with num_processes=2
 @pytest.mark.parametrize("num_processes", (1,))
+@pytest.mark.skipif(
+    sys.platform == "win32" and sys.version_info[:2] == (3, 15),
+    reason="PyTorch 2.14.1 Windows/Python 3.15 Gloo all-reduce crashes; DDP is unsupported",
+)
 def test_cpu(tmpdir, num_processes):
     log_filepath = tmpdir / "log"
     trainer = DummyTrainer(

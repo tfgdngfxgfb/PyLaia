@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylaia"
-version = "1.2.0+fork.20261007"
+version = "1.2.1+fork.20261014"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
@@ -18,11 +18,12 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Image Recognition",
     "Topic :: Text Processing :: Linguistic",
 ]
-requires-python = ">=3.13,<3.15"
+requires-python = ">=3.13,<3.16"
 dependencies = [
     "setuptools==84.0.0",
     "imagesize==2.0.1",
@@ -40,11 +41,12 @@ dependencies = [
     "python-bidi==0.6.11",
     "numpy==2.5.3",
     "pillow==12.3.0",
+    "PyYAML==6.0.3",
     "packaging>=23",
     "tqdm>=4.66",
 ]
-license = "MIT"
-license-files = ["LICENSE"]
+license = "MIT AND BSD-2-Clause"
+license-files = ["LICENSE", "LICENSE-TORCHAUDIO"]
 
 [project.urls]
 Homepage = "https://github.com/tfgdngfxgfb/PyLaia-fork"
@@ -68,7 +70,11 @@ test = [
     "tensorboard>=2.18",
 ]
 wandb = ["wandb==0.30.0"]
-language-model = ["torchaudio==2.11.0", "flashlight-text==0.0.7", "kenlm==0.3.0"]
+language-model = [
+    "torchaudio==2.11.0; python_version < '3.15'",
+    "flashlight-text==0.0.7",
+    "kenlm==0.3.0",
+]
 
 [project.scripts]
 pylaia-htr-create-model = "laia.scripts.htr.create_model:main"

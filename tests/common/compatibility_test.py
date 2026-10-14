@@ -54,6 +54,62 @@ def test_missing_native_cleanup_is_not_called(monkeypatch):
     register.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "platform,python,cuda,blocked",
+    [
+        ("win32", (3, 13), "13.0", False),
+        ("win32", (3, 14), "13.0", False),
+        ("win32", (3, 15), None, False),
+        ("linux", (3, 15), "13.0", False),
+        ("win32", (3, 15), "13.0", True),
+        ("win32", (3, 15), "12.6", True),
+    ],
+)
+def test_known_crashing_runtime_is_rejected(
+    monkeypatch, platform, python, cuda, blocked
+):
+    monkeypatch.setattr(compatibility, "platform", platform)
+    monkeypatch.setattr(compatibility, "version_info", python)
+    monkeypatch.setattr(torch.version, "cuda", cuda)
+    if blocked:
+        with pytest.raises(RuntimeError, match="autograd-thread shutdown crash"):
+            compatibility.ensure_supported_runtime()
+    else:
+        compatibility.ensure_supported_runtime()
+
+
+@pytest.mark.parametrize(
+    "strategy,devices,nodes,blocked",
+    [
+        ("auto", 1, 1, False),
+        ("auto", "auto", 1, False),
+        ("auto", 2, 1, True),
+        ("auto", "2", 1, True),
+        ("auto", [0, 1], 1, True),
+        ("auto", 1, 2, True),
+        ("ddp", 1, 1, True),
+        ("ddp_spawn", 1, 1, True),
+    ],
+)
+def test_windows315_distributed_settings_are_rejected(
+    monkeypatch, strategy, devices, nodes, blocked
+):
+    monkeypatch.setattr(compatibility, "platform", "win32")
+    monkeypatch.setattr(compatibility, "version_info", (3, 15))
+    if blocked:
+        with pytest.raises(RuntimeError, match="single-device CPU"):
+            compatibility.ensure_supported_trainer(strategy, devices, nodes)
+    else:
+        compatibility.ensure_supported_trainer(strategy, devices, nodes)
+
+
+def test_older_python_retains_distributed_settings(monkeypatch):
+    monkeypatch.setattr(compatibility, "platform", "win32")
+    for python in ((3, 13), (3, 14)):
+        monkeypatch.setattr(compatibility, "version_info", python)
+        compatibility.ensure_supported_trainer("ddp_spawn", 2, 2)
+
+
 @pytest.mark.skipif(
     sys.platform != "win32" or not torch.cuda.is_available(),
     reason="Windows CUDA shutdown regression",

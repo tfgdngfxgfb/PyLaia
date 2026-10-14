@@ -1,3 +1,4 @@
+import sys
 from typing import Any, Dict, List
 
 import numpy as np
@@ -34,22 +35,26 @@ class CTCLanguageDecoder:
         temperature: float = 1.0,
     ):
         try:
-            from torchaudio.models.decoder import ctc_decoder
+            if sys.version_info[:2] >= (3, 15):
+                from laia.decoders._flashlight_ctc_decoder import ctc_decoder
+            else:
+                from torchaudio.models.decoder import ctc_decoder
+
+            self.decoder = ctc_decoder(
+                lm=language_model_path,
+                lexicon=lexicon_path,
+                tokens=tokens_path,
+                lm_weight=language_model_weight,
+                blank_token=blank_token,
+                unk_word=unk_token,
+                sil_token=sil_token,
+            )
         except (ImportError, OSError) as exc:
             raise RuntimeError(
-                "Language-model decoding requires the optional torchaudio and "
-                "Flashlight/KenLM backend. Use this fork's bundled Windows wheels "
+                "Language-model decoding requires Flashlight/KenLM and, on "
+                "Python 3.13/3.14, torchaudio. Use this fork's bundled Windows wheels "
                 "or ci/build-language-model.ps1; otherwise use greedy decoding."
             ) from exc
-        self.decoder = ctc_decoder(
-            lm=language_model_path,
-            lexicon=lexicon_path,
-            tokens=tokens_path,
-            lm_weight=language_model_weight,
-            blank_token=blank_token,
-            unk_word=unk_token,
-            sil_token=sil_token,
-        )
         self.temperature = temperature
         self.language_model_weight = language_model_weight
 

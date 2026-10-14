@@ -1,10 +1,13 @@
 param(
-    [ValidateSet('3.13', '3.14')][string]$PythonVersion = '3.14',
+    [ValidateSet('3.13', '3.14', '3.15')][string]$PythonVersion = '3.14',
     [ValidateSet('CPU', 'CUDA')][string]$TorchBuild = 'CUDA',
     [string]$InstallationPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
+if ($PythonVersion -eq '3.15' -and $TorchBuild -eq 'CUDA') {
+    throw 'Windows Python 3.15 + PyTorch 2.14.1 CUDA crashes during native shutdown. Choose -PythonVersion 3.14 for GPU, or -PythonVersion 3.15 -TorchBuild CPU. No files were changed.'
+}
 $taskTag = 'cp' + $PythonVersion.Replace('.', '')
 $taskRuntime = Join-Path $PSScriptRoot ('runtime\python' + $PythonVersion.Replace('.', '') + '\python.exe')
 $taskManifest = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'build-info.json') -Raw | ConvertFrom-Json
@@ -33,6 +36,12 @@ $taskFlashlight = Join-Path $taskWheelFolder ('flashlight_text-0.0.7+pylaia1-' +
 $taskPylaia = Join-Path $PSScriptRoot ('wheels\' + $taskManifest.pylaia_wheel)
 & $taskPython -m pip install --no-deps $taskKenlm $taskFlashlight
 if ($LASTEXITCODE -ne 0) { throw 'Local native package installation failed.' }
+if ($PythonVersion -eq '3.15') {
+    $taskBidi = Join-Path $taskWheelFolder 'python_bidi-0.6.11-cp315-cp315-win_amd64.whl'
+    $taskYaml = Join-Path $taskWheelFolder 'pyyaml-6.0.3-cp315-cp315-win_amd64.whl'
+    & $taskPython -m pip install --no-deps $taskBidi $taskYaml
+    if ($LASTEXITCODE -ne 0) { throw 'Local Python 3.15 text/configuration package installation failed.' }
+}
 & $taskPython -m pip install ($taskPylaia + '[language-model]')
 if ($LASTEXITCODE -ne 0) { throw 'PyLaia installation failed.' }
 & $taskPython -m pip check

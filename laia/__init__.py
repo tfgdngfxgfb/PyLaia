@@ -13,9 +13,13 @@ import laia.losses
 import laia.nn
 import laia.utils
 from laia.common.compatibility import (
+    ensure_supported_runtime as _ensure_supported_runtime,
+)
+from laia.common.compatibility import (
     register_cudnn_shutdown_cleanup as _register_cudnn_shutdown_cleanup,
 )
 
+_ensure_supported_runtime()
 _register_cudnn_shutdown_cleanup()
 
 __all__ = ["__version__", "__root__", "get_installed_versions"]

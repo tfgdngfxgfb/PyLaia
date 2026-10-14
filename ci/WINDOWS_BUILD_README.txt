@@ -1,16 +1,18 @@
-PyLaia 1.2.0+fork.20261007 — privat Windows-bygg
-Versjon 1.2.0+fork.20261007. Dette er ikke den offisielle PyLaia-utgaven.
+PyLaia 1.2.1+fork.20261014 — privat Windows-bygg
+Versjon 1.2.1+fork.20261014. Dette er ikke den offisielle PyLaia-utgaven.
 
 En målrettet Windows-retting rydder PyTorchs cuDNN-dropout-cache ved avslutning,
 før GPU-bibliotekene lukkes. Den unngår et gjenskapt avslutningskrasj.
-cuDNN er fortsatt aktivert, og dropout/modellinnstillinger endres ikke.
+Ved GPU-bruk på 3.13/3.14 er cuDNN fortsatt aktivert. Dropout/modellinnstillinger endres ikke.
 Ingen PyTorch- eller cuDNN-filer erstattes, og ingen feilstatus skjules.
 
 Innhold:
 - Opprinnelig pakkenavn pylaia, import laia og pylaia-htr-* kommandoer.
 - Versjonsnummeret skiller bygget fra offisiell PyLaia.
-- Python 3.14.8 og 3.13.16, kun brukt i et isolert miljø.
-- Ferdigbygde Flashlight 0.0.7+pylaia1 og KenLM 0.3.0+pylaia1 for begge Python-versjoner.
+- Python 3.15.0, 3.14.8 og 3.13.16, kun brukt i et isolert miljø.
+- Python 3.15 støttes med CPU på Windows; GPU beholdes på 3.13 og 3.14.
+- Ferdigbygde Flashlight 0.0.7+pylaia1 og KenLM 0.3.0+pylaia1 for alle tre.
+- Ferdigbygget python-bidi og PyYAML for 3.15; sluttbrukeren trenger ingen kompilator.
 - Endret kildekode og opprinnelige lisenser i sources/, samt byggeverktøy.
 - Kontrollsummer og byggeinformasjon i build-info.json.
 
@@ -23,8 +25,10 @@ Installasjon:
    .\Install-PyLaia.ps1 -TorchBuild CPU
 
 Standard er Python 3.14. For Python 3.13, legg til -PythonVersion 3.13.
+For Python 3.15 med CPU:
+   .\Install-PyLaia.ps1 -PythonVersion 3.15 -TorchBuild CPU
 Uten -TorchBuild velger installasjonsprogrammet CUDA.
-Installasjonen oppretter en ny pylaia-env-3.14 (eller 3.13) ved siden av denne filen.
+Installasjonen oppretter pylaia-env-3.14 (eller valgt 3.13/3.15) ved siden av denne filen.
 Eksisterende installasjonsmapper overskrives ikke. Du kan velge -InstallationPath.
 Ingen global Python, filtilknytning eller system-PATH endres.
 
@@ -33,6 +37,12 @@ PyTorch 2.14.1, TorchVision 0.29.1 og andre vanlige avhengigheter lastes ned fra
 offisielle PyTorch/PyPI-kilder. Internettilgang trengs under denne første installasjonen.
 Dette er altså ikke en fullstendig offlinepakke.
 Ved CUDA-installasjon kreves en NVIDIA-driver som støtter CUDA 13.0.
+Python 3.15 + CUDA avvises før installasjonen: begge testede offisielle CUDA-bygg
+av PyTorch 2.14.1 har et avslutningskrasj i autograd-tråder. Distribuert kjøring
+med Gloo/DDP på Windows 3.15 har også et kjent krasj og støttes ikke her.
+Bruk 3.13/3.14 for GPU; på 3.15 brukes CPU, devices=1 og strategy=auto.
+TorchAudio brukes fortsatt på 3.13/3.14. På 3.15 brukes samme Flashlight/KenLM
+via en medfølgende adapter. Original TorchAudio-lisens følger med.
 
 Installasjonen kontrollerer lokale filers kontrollsummer, avhengigheter, språkmodell-
 dekoding og (ved CUDA) at grafikkortet faktisk kan brukes.
@@ -54,5 +64,6 @@ det åpner for kjøring av Python-kode fra filen. Les SECURITY.md.
 Bygging av tilleggene på nytt fra prosjektets Git-klone:
   .\ci\build-language-model.ps1 -Python .\.venv314\Scripts\python.exe -Install
 MSVC x64 Build Tools og Windows SDK kreves bare ved ny kompilering, ikke for
-bruk av de ferdigbygde pakkene. Kontrollsummene er en integritetskontroll;
+bruk av de ferdigbygde pakkene. Ny bygging av python-bidi for 3.15 krever også
+Rust/Cargo. Kontrollsummene er en integritetskontroll;
 ZIP-filen er ikke kode-signert. Sammenlign også den separate ZIP-kontrollsummen.

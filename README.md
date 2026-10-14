@@ -1,19 +1,28 @@
-# PyLaia 1.2.0+fork.20261007
+# PyLaia 1.2.1+fork.20261014
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.0+fork.20261007`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.1+fork.20261014`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
 
-- Python **3.14.8** (recommended), also Python **3.13.16**.
+- Python **3.14.8** (recommended for GPU), also Python **3.13.16**.
+- Python **3.15.0**: single-device **CPU only on Windows** in this release.
 - PyTorch **2.14.1**, TorchVision **0.29.1**, Lightning **2.6.6**.
 - CPU, or NVIDIA CUDA 13.0 with a compatible driver and cuDNN enabled.
-- Python 3.15 is not supported by this release.
+- Python 3.13/3.14 retain CPU and NVIDIA GPU support. Free-threaded Python is not supported.
+
+On Windows, official Torch 2.14.1 CUDA 13.0 **and** CUDA 12.6 wheels for Python
+3.15 reproduce a native autograd-thread shutdown crash, even without PyLaia.
+Gloo/distributed execution on Windows 3.15 also crashes. This build rejects those
+known-crashing combinations with a clear error instead of hiding their exit status.
+Use Python 3.14 for GPU/distributed work and the official CPU wheel for Python 3.15.
+No CUDA DLLs are replaced and cuDNN is not disabled. `torch.compile` is not supported
+on 3.15 by the pinned Torch release; PyLaia's existing eager workflow does not need it.
 
 Dependencies are pinned in [pyproject.toml](pyproject.toml). Do not install the unrelated
 upstream PyPI package with `pip install pylaia`; install this checkout or the supplied
@@ -45,6 +54,22 @@ python -c "import torch; print(torch.__version__); print(torch.cuda.is_available
 
 Data loading defaults to zero worker processes, which is safe on Windows.
 Increase `--data.num_workers` when appropriate.
+
+### Python 3.15 on Windows (CPU)
+
+The Windows bundle includes all three runtimes. Select 3.15 explicitly:
+
+```powershell
+.\Install-PyLaia.ps1 -PythonVersion 3.15 -TorchBuild CPU
+```
+
+For a source checkout, create a 3.15 environment, install CPU Torch/TorchVision
+from the official CPU index using the versions above, then run the native build
+script with that interpreter before installing `.[test,dev,language-model]`.
+Rebuilding 3.15's python-bidi additionally requires Rust/Cargo. The bundle includes
+ready-made python-bidi and PyYAML wheels, so end users need no C++ compiler or Rust.
+Torch/TorchVision 3.15 wheels are only available from the official PyTorch index,
+not PyPI. Keep `devices=1` and `strategy=auto` on Windows 3.15.
 
 ## Tools and example
 
@@ -92,9 +117,13 @@ Weights & Biases is opt-in: `python -m pip install -e '.[wandb]'`, then
 `--train.log_to_wandb=true`. Ordinary training stores logs locally.
 
 Greedy CTC decoding and char/word segmentation need no TorchAudio.
-Language-model decoding uses the optional TorchAudio 2.11 / Flashlight backend
-plus KenLM. Upstream Flashlight 0.0.7 has no Python 3.13/3.14 wheels. This fork builds
-patched Windows x64 wheels for both versions, verified with real n-gram decoding
+Language-model decoding uses Flashlight plus KenLM. On Python 3.13/3.14 it retains
+the optional TorchAudio 2.11 backend. Python 3.15 instead uses a small offline
+adapter derived from TorchAudio's BSD-licensed decoder; the original license is
+included as LICENSE-TORCHAUDIO. Beam defaults, trie construction, token reduction
+and scores match the existing backend in parity tests. Upstream Flashlight 0.0.7
+has no wheels for these Python versions. This fork builds patched Windows x64
+wheels for all three versions, verified with real n-gram decoding
 and Unicode file paths. Build them before installing the language-model extra:
 
 ```powershell
@@ -102,11 +131,15 @@ and Unicode file paths. Build them before installing the language-model extra:
 ```
 
 MSVC C++ Build Tools and Windows SDK are required only for source builds.
+Rebuilding python-bidi for 3.15 also requires Rust/Cargo.
 The build uses hash-verified release archives, Cython 3.3 and pybind11 3.1, not mutable
 KenLM HEAD. Patched versions are `flashlight-text==0.0.7+pylaia1` and
 `kenlm==0.3.0+pylaia1`. The Windows bundle includes those wheels, corresponding
 patched sources/licenses, isolated Python runtimes and an installer; other available
 dependencies download from official PyTorch/PyPI sources during installation.
+Python 3.15 also includes locally built python-bidi 0.6.11 and PyYAML 6.0.3 wheels
+with hash-verified original source archives and licenses. Those packages are
+installed locally before resolving the rest of PyLaia's dependencies.
 This bundle is not fully offline. Linux language-model source builds are not verified.
 
 ### Windows cuDNN shutdown compatibility
@@ -141,16 +174,17 @@ model creation, CPU/CUDA training, checkpoint resume, a new symbol set during
 fine-tuning, decoding and export. CUDA tests skip when a GPU is unavailable.
 Some inherited tests depend on unavailable pretrained files and remain skipped;
 no external trained model is needed for the new workflow test.
-GitHub Actions checks Python 3.13/3.14 on Windows/Linux. There is no automatic
+GitHub Actions checks Python 3.13/3.14/3.15 on Windows/Linux. There is no automatic
 PyPI, public documentation, coverage upload, or Docker-registry publishing.
 Windows language-model builds/tests and dependency advisory checks are also included.
-The final local Windows runs both exit successfully (status 0): Python 3.13.16/CPU
-has 1177 passed, 8 skipped and 2 expected failures; Python 3.14.8/CUDA has
-1223 passed, 5 skipped and 2 expected failures. cuDNN remains enabled and the
-multi-layer LSTM/dropout shutdown regression passes. No tests failed.
-Separate native-decoder and training workflow tests exit successfully on both
-versions. GitHub's Windows/Linux CPU and Windows native-language-model checks pass
-on both Python versions. Unavailable pretrained-file tests remain skipped.
+The 2026-10-07 baseline exited successfully on 3.13/CPU and 3.14/CUDA. The 3.15
+extension adds native-adapter parity, input-validation, interpreter-range and
+known-crashing-runtime regression tests. Windows 3.15 tests run with the official
+CPU wheel. Two inherited DDP/Gloo helper tests are explicitly skipped on Windows
+3.15 because of a reproduced native crash; they remain enabled on 3.13/3.14 and
+Linux. GPU tests skip in CPU-only environments, and unavailable pretrained-file
+tests remain skipped. Current validation results are recorded in SECURITY.md;
+passing CPU tests does not imply Python 3.15 GPU or distributed support.
 
 The Dockerfile uses Python 3.14 and CPU PyTorch by default. For NVIDIA,
 build with `--build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu130`

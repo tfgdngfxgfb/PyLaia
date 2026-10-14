@@ -24,7 +24,7 @@ def main():
     wheel_name = f"pylaia-{version}-py3-none-any.whl"
     (destination / "wheels").mkdir()
     shutil.copy2(ROOT / "dist" / wheel_name, destination / "wheels" / wheel_name)
-    for tag in ("cp313", "cp314"):
+    for tag in ("cp313", "cp314", "cp315"):
         source = ROOT / "dist/language-model" / tag
         wheels = destination / "wheels" / tag
         wheels.mkdir()
@@ -34,10 +34,25 @@ def main():
         ):
             filename = f"{package}-{package_version}+pylaia1-{tag}-{tag}-win_amd64.whl"
             shutil.copy2(source / filename, wheels / filename)
+        if tag == "cp315":
+            for filename in (
+                "python_bidi-0.6.11-cp315-cp315-win_amd64.whl",
+                "pyyaml-6.0.3-cp315-cp315-win_amd64.whl",
+            ):
+                shutil.copy2(source / filename, wheels / filename)
         shutil.copytree(source / "sources", destination / "sources" / tag)
-    for version_tag in ("313", "314"):
+    python_versions = {}
+    for version_tag in ("313", "314", "315"):
+        runtime = ROOT / ".runtime" / f"python{version_tag}"
+        python_versions[f"3.{version_tag[1:]}"] = (
+            subprocess.check_output(
+                [str(runtime / "python.exe"), "--version"], text=True
+            )
+            .strip()
+            .removeprefix("Python ")
+        )
         shutil.copytree(
-            ROOT / ".runtime" / f"python{version_tag}",
+            runtime,
             destination / "runtime" / f"python{version_tag}",
             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
         )
@@ -48,6 +63,7 @@ def main():
         ("ci/build-language-model.ps1", "build-tools/build-language-model.ps1"),
         ("ci/WINDOWS_BUILD_README.txt", "LES-MEG.txt"),
         ("LICENSE", "LICENSE-PyLaia.txt"),
+        ("LICENSE-TORCHAUDIO", "LICENSE-TORCHAUDIO"),
         ("SECURITY.md", "SECURITY.md"),
         ("README.md", "README.md"),
     ):
@@ -63,7 +79,13 @@ def main():
         "source_commit": subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
         ).strip(),
-        "python": {"3.13": "3.13.16", "3.14": "3.14.8"},
+        "python": python_versions,
+        "windows_support": {
+            "3.13": ["CPU", "CUDA"],
+            "3.14": ["CPU", "CUDA"],
+            "3.15": ["CPU"],
+        },
+        "windows315_distributed_supported": False,
         "requires_network_for_other_dependencies": True,
         "files": [],
     }

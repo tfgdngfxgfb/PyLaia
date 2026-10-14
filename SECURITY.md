@@ -1,6 +1,6 @@
-# Security notes — PyLaia 1.2.0+fork.20261007
+# Security notes — PyLaia 1.2.1+fork.20261014
 
-Review date: 2026-10-07. Scope: this fork, dependency advisories, Windows packaging,
+Review dates: 2026-10-07 and 2026-10-14. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
 This is a targeted engineering review, not a formal penetration test or guarantee.
 
@@ -37,6 +37,48 @@ This is a targeted engineering review, not a formal penetration test or guarante
   it is only registered on Windows CUDA builds. No external DLLs are substituted.
 
 ## Checks
+
+### Python 3.15 extension (2026-10-14)
+
+- Windows 3.15 support is explicitly **single-device CPU only**, as agreed with
+  the repository owner. Python 3.13/3.14 retain CPU/CUDA support.
+- Official Torch 2.14.1 CUDA 13.0 and CUDA 12.6 CPython 3.15 wheels reproduce a
+  native `0xC0000005` autograd-thread shutdown failure with plain PyTorch alone.
+  Explicit tensor/cache cleanup, early native engine shutdown, allocator changes
+  and disabling autograd multithreading did not fix it. Those experimental probes
+  are not shipped. No Torch/CUDA DLLs are patched, and no exit status is suppressed.
+- CUDA installations/imports on Windows 3.15 are rejected before training. Gloo/DDP
+  also reproduces a native crash; distributed Trainer configurations are rejected.
+  Two inherited DDP helper tests skip on Windows 3.15 only, with an explicit reason;
+  they remain active on older Python and Linux. Passing CPU tests is not GPU/DDP support.
+- Python 3.15 decodes through a small offline Flashlight adapter derived from
+  TorchAudio 2.11's BSD-2-Clause implementation. Original attribution/license is
+  shipped. Python 3.13/3.14 retain their original TorchAudio backend. Parity tests
+  compare tokens, words, timesteps and scores for lexicon and lexicon-free cases.
+  Raw-pointer calls validate tensor device, dtype, contiguity, dimensions, token
+  count and length bounds before entering native code.
+- Python 3.15's locally built python-bidi 0.6.11 and PyYAML 6.0.3 use SHA-256-verified
+  unmodified PyPI source archives. Their corresponding sources/licenses accompany
+  the bundle; Rust/Cargo and MSVC are needed only to rebuild, not to install it.
+- Updated 3.15 installed-environment advisory audit: no known vulnerabilities
+  in auditable packages. Locally versioned Torch/Flashlight/KenLM require a separate
+  advisory check of base releases; native/Rust internals are not formally audited.
+- Final full local runs all exit normally with status 0 and no failed tests:
+
+  | Runtime | Passed | Skipped | Expected failures |
+  | --- | ---: | ---: | ---: |
+  | Python 3.13.16 / CPU | 1213 | 8 | 2 |
+  | Python 3.14.8 / CUDA 13.0 | 1259 | 5 | 2 |
+  | Python 3.15.0 / CPU | 1207 | 14 | 2 |
+
+  3.14 GPU tests retain cuDNN and dropout. The 3.15 skips include unavailable
+  TorchAudio parity (parity runs on 3.13/3.14), GPU tests, known-crashing Windows
+  DDP helpers and inherited unavailable pretrained files. No failed tests are
+  converted into a passing exit code. CUDA 3.15 remains explicitly unsupported.
+- Staged-source secret scan: no leaks. Generated environments, upstream test
+  fixtures and downloaded binary caches are outside that source/history scan.
+
+### Original 3.13/3.14 baseline (2026-10-07)
 
 - `pip-audit 2.10.1`: no known advisories for auditable installed dependencies at
   review time. Local CUDA/native version suffixes are not found on PyPI; their
@@ -76,8 +118,9 @@ WandB/network logging is opt-in. Ordinary training stays local, but installing
 available dependencies contacts official PyTorch/PyPI services. The Windows build
 includes Flashlight/KenLM locally and is not a fully offline PyTorch distribution.
 
-Docker, Linux native language-model builds, multi-GPU training, free-threaded
-CPython and Python 3.15 have not been verified by the local Windows run.
+Docker, Linux native language-model builds, multi-GPU training and free-threaded
+CPython have not been verified by the local Windows run. Windows Python 3.15
+GPU and distributed execution are explicitly unsupported and blocked.
 Inherited tests depending on unavailable external pretrained files remain skipped.
 The cuDNN shutdown fix relies on an internal API of the pinned Torch release.
 Retest its native cleanup and process exit when upgrading Torch. It is not a

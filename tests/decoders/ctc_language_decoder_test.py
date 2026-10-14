@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -100,12 +101,14 @@ ngram 2=14
 def test_lm_decoding_weight(
     tmpdir, input_tensor, lm_weight, expected_string, expected_confidence
 ):
+    if sys.version_info[:2] < (3, 15):
+        pytest.importorskip(
+            "torchaudio.models.decoder",
+            reason="Optional language-model backend is not installed",
+        )
     pytest.importorskip(
-        "torchaudio.models.decoder",
-        reason="Optional language-model backend is not installed",
-    )
-    pytest.importorskip(
-        "flashlight.lib.text.decoder", reason="Flashlight has no Python 3.14 wheels"
+        "flashlight.lib.text.decoder",
+        reason="Optional Flashlight backend is not installed",
     )
     tokens_path = Path(tmpdir) / "tokens.txt"
     lexicon_path = Path(tmpdir) / "lexicon.txt"

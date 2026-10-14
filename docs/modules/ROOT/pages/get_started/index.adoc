@@ -1,7 +1,8 @@
 [#installation]
 = Installation
 
-This private independent fork requires Python 3.13 or 3.14; Python 3.14 is recommended.
+This private independent fork supports standard Python 3.13, 3.14 and 3.15.
+On Windows, 3.15 is single-device CPU only; use 3.13/3.14 for GPU or distributed work.
 Install this repository, not the upstream PyPI package.
 
 [#from-source]
@@ -32,8 +33,10 @@ Use `--trainer.accelerator gpu --trainer.devices 1` for GPU or
 `--trainer.accelerator cpu` for CPU. Data loading defaults to zero worker processes.
 
 Greedy decoding is part of the standard installation. Language-model decoding has
-an optional Flashlight backend that lacks Python 3.13/3.14 wheels; see the README
-for this limitation before attempting a source build.
+an optional Flashlight/KenLM backend. Use the bundled Windows wheels or the
+project's native build script for your Python version. Python 3.15 does not need
+TorchAudio; it uses a compatible offline adapter to Flashlight. See the README
+for source-build requirements and validation limits.
 
 Run `python -m pytest tests` and `python -m pip check` to verify your environment.
 

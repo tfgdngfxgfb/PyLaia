@@ -1,5 +1,9 @@
 from importlib.metadata import distribution, version
 
+import pytest
+from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
+
 from laia import *
 
 
@@ -27,3 +31,23 @@ def test_original_package_and_command_names():
         "pylaia-htr-train-ctc",
         "pylaia-htr-dataset-validate",
     }
+
+
+@pytest.mark.parametrize("python", ["3.13", "3.14", "3.15"])
+def test_supported_python_versions(python):
+    supported = SpecifierSet(distribution("pylaia").metadata["Requires-Python"])
+    assert python in supported
+    assert "3.12" not in supported
+    assert "3.16" not in supported
+
+
+@pytest.mark.parametrize("python", ["3.13", "3.14", "3.15"])
+def test_torchaudio_is_only_required_on_older_python(python):
+    audio = next(
+        Requirement(item)
+        for item in distribution("pylaia").requires
+        if Requirement(item).name == "torchaudio"
+    )
+    assert audio.marker.evaluate(
+        {"python_version": python, "extra": "language-model"}
+    ) == (python != "3.15")

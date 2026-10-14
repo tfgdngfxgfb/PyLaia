@@ -1,6 +1,18 @@
 [#releases]
 = Releases
 
+== 1.2.1 — Python 3.15 compatibility
+
+* Added Python 3.15 without removing 3.13/3.14 support or changing package/command names.
+  On Windows, 3.15 is single-device CPU only; GPU and Gloo/DDP are blocked due to
+  reproduced native failures in official Torch builds. Use 3.13/3.14 for GPU.
+* Python 3.15 uses a TorchAudio-independent Flashlight adapter with the same
+  offline beam-search defaults; 3.13/3.14 retain the existing TorchAudio backend.
+* Windows language-model builds support all three CPython versions. Python 3.15
+  also receives local python-bidi and PyYAML wheels with corresponding sources.
+* Expanded compatibility tests and CI matrices. Torch 2.14.1 remains pinned.
+* Free-threaded Python and `torch.compile` on Python 3.15 are not supported.
+
 == 1.2.0 — independent fork
 
 * Python 3.14 (also 3.13), PyTorch 2.14.1 and TorchVision 0.29.1.
@@ -8,8 +20,8 @@
 * Migrated Lightning callbacks, checkpoint loading/resume and fine-tuning.
 * UTF-8 file handling and zero-worker default on Windows.
 * Offline CPU/CUDA integration tests and independent private GitHub CI.
-* Greedy decoding works without TorchAudio. Optional Flashlight language-model
-  decoding needs a source build for Python 3.13/3.14 and is not yet verified.
+* Greedy decoding works without TorchAudio. Optional Flashlight/KenLM language-model
+  decoding has verified Windows x64 source builds and bundled wheels for 3.13/3.14.
 
 The entries below describe historical upstream releases, not this fork's requirements.
 
