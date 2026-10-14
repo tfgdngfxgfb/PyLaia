@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylaia"
-version = "1.2.1+fork.20261014"
+version = "1.2.2+fork.20261014"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
@@ -39,7 +39,7 @@ dependencies = [
     "mdutils==1.8.1",
     "prettytable==3.18.0",
     "python-bidi==0.6.11",
-    "numpy==2.5.3",
+    "numpy==2.5.4",
     "pillow==12.3.0",
     "PyYAML==6.0.3",
     "packaging>=23",

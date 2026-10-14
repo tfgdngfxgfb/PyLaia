@@ -6,17 +6,25 @@ from unittest.mock import Mock
 import pytest
 import torch
 
-from ci.verify_installation import ARPA, LEXICON, TOKENS
+from ci.verify_installation import ARPA, TOKENS
 from laia.decoders._flashlight_ctc_decoder import _Decoder, ctc_decoder
 
 
 @pytest.fixture
 def decoder_args(tmp_path):
     pytest.importorskip("flashlight.lib.text.decoder")
+    # Blank/silence are control tokens, not lexical words. Including silence
+    # as a word creates tied word-boundary paths at lm_weight=0: even two
+    # TorchAudio decoders can return different words for identical tokens/scores.
+    lexicon = "".join(
+        f"{token} {token}\n"
+        for token in TOKENS.splitlines()
+        if token not in {"<ctc>", "<space>"}
+    )
     for filename, content in (
         ("lm.arpa", ARPA),
         ("tokens.txt", TOKENS),
-        ("lexicon.txt", LEXICON),
+        ("lexicon.txt", lexicon),
     ):
         (tmp_path / filename).write_text(content, encoding="utf-8", newline="\n")
     return dict(

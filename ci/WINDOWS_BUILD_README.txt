@@ -1,5 +1,5 @@
-PyLaia 1.2.1+fork.20261014 — privat Windows-bygg
-Versjon 1.2.1+fork.20261014. Dette er ikke den offisielle PyLaia-utgaven.
+PyLaia 1.2.2+fork.20261014 — privat Windows-bygg
+Versjon 1.2.2+fork.20261014. Dette er ikke den offisielle PyLaia-utgaven.
 
 En målrettet Windows-retting rydder PyTorchs cuDNN-dropout-cache ved avslutning,
 før GPU-bibliotekene lukkes. Den unngår et gjenskapt avslutningskrasj.
@@ -9,6 +9,7 @@ Ingen PyTorch- eller cuDNN-filer erstattes, og ingen feilstatus skjules.
 Innhold:
 - Opprinnelig pakkenavn pylaia, import laia og pylaia-htr-* kommandoer.
 - Versjonsnummeret skiller bygget fra offisiell PyLaia.
+- NumPy oppdatert fra 2.5.3 til 2.5.4; pakkenavn og kommandoer er uendret.
 - Python 3.15.0, 3.14.8 og 3.13.16, kun brukt i et isolert miljø.
 - Python 3.15 støttes med CPU på Windows; GPU beholdes på 3.13 og 3.14.
 - Ferdigbygde Flashlight 0.0.7+pylaia1 og KenLM 0.3.0+pylaia1 for alle tre.

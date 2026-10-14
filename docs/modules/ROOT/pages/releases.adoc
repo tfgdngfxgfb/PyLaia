@@ -1,6 +1,13 @@
 [#releases]
 = Releases
 
+== 1.2.2 — NumPy maintenance update
+
+* Updated NumPy from 2.5.3 to 2.5.4. Other dependency requirements are unchanged.
+* Package/import/command names and Windows runtime support are unchanged:
+  Python 3.13/3.14 CPU/CUDA, Python 3.15 single-device CPU.
+* Corrected ambiguous parity-test lexicon data; production decoder code is unchanged.
+
 == 1.2.1 — Python 3.15 compatibility
 
 * Added Python 3.15 without removing 3.13/3.14 support or changing package/command names.

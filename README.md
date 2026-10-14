@@ -1,11 +1,11 @@
-# PyLaia 1.2.1+fork.20261014
+# PyLaia 1.2.2+fork.20261014
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.1+fork.20261014`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.2+fork.20261014`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
@@ -13,6 +13,7 @@ independent build; check it with `pylaia-htr-create-model --version`.
 - Python **3.14.8** (recommended for GPU), also Python **3.13.16**.
 - Python **3.15.0**: single-device **CPU only on Windows** in this release.
 - PyTorch **2.14.1**, TorchVision **0.29.1**, Lightning **2.6.6**.
+- NumPy **2.5.4**, with the same Python 3.13/3.14/3.15 support.
 - CPU, or NVIDIA CUDA 13.0 with a compatible driver and cuDNN enabled.
 - Python 3.13/3.14 retain CPU and NVIDIA GPU support. Free-threaded Python is not supported.
 

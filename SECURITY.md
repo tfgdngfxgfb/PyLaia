@@ -1,4 +1,4 @@
-# Security notes — PyLaia 1.2.1+fork.20261014
+# Security notes — PyLaia 1.2.2+fork.20261014
 
 Review dates: 2026-10-07 and 2026-10-14. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
@@ -37,6 +37,31 @@ This is a targeted engineering review, not a formal penetration test or guarante
   it is only registered on Windows CUDA builds. No external DLLs are substituted.
 
 ## Checks
+
+### NumPy maintenance update (2026-10-14)
+
+- NumPy is pinned to 2.5.4, replacing 2.5.3. Official PyPI Windows x64 wheels
+  are available for all three supported Python versions; SciPy 1.18.1 accepts
+  this version. Other dependency requirements and production Python code are unchanged.
+- Updated installed-environment advisory audit: no known vulnerabilities in
+  auditable packages, including NumPy 2.5.4. Base releases of the locally versioned
+  Torch/TorchVision/Flashlight/KenLM packages were checked separately, also without
+  known advisories. The native-binary audit limitations below still apply.
+- A pre-existing nondeterministic parity-test fixture was reproduced with both
+  NumPy 2.5.3 and 2.5.4. With silence also listed as a lexical word and LM weight
+  zero, repeated TorchAudio calls alone returned different word boundaries with
+  identical tokens and scores. Only the test lexicon was corrected to exclude
+  blank/silence as words; all token/word/timestep/score comparisons remain active.
+  The adapter test module passed five consecutive runs on both 3.13 and 3.14.
+- Installed-wheel upgrades on 3.13/3.14 CUDA and 3.15 CPU pass dependency checks,
+  version assertions, native LM decoding and normal process exit. Both GPU checks
+  retain cuDNN and RNN dropout. All 91 production files inside the new wheel are
+  byte-identical to 1.2.1; entry points/Python constraints are unchanged, and NumPy
+  is the only changed dependency requirement. Installed-package audits also report
+  no known vulnerabilities in auditable dependencies for each of these environments.
+- Full regressions with NumPy 2.5.4 all exit normally with status 0: Python 3.13
+  CPU 1213 passed / 8 skipped / 2 expected failures; Python 3.14 CUDA 1259 / 5 / 2;
+  Python 3.15 CPU 1207 / 14 / 2. The existing platform limitations remain unchanged.
 
 ### Python 3.15 extension (2026-10-14)
 
