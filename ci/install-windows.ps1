@@ -1,16 +1,20 @@
 param(
-    [ValidateSet('3.13', '3.14', '3.15')][string]$PythonVersion = '3.14',
+    [ValidateSet('3.13', '3.14', '3.15')][string]$PythonVersion = '3.15',
     [ValidateSet('CPU', 'CUDA')][string]$TorchBuild = 'CUDA',
-    [string]$InstallationPath = ''
+    [string]$InstallationPath = '',
+    [string]$OriginalTorchWheel = ''
 )
 
 $ErrorActionPreference = 'Stop'
-if ($PythonVersion -eq '3.15' -and $TorchBuild -eq 'CUDA') {
-    throw 'Windows Python 3.15 + PyTorch 2.14.1 CUDA crashes during native shutdown. Choose -PythonVersion 3.14 for GPU, or -PythonVersion 3.15 -TorchBuild CPU. No files were changed.'
-}
 $taskTag = 'cp' + $PythonVersion.Replace('.', '')
 $taskRuntime = Join-Path $PSScriptRoot ('runtime\python' + $PythonVersion.Replace('.', '') + '\python.exe')
 $taskManifest = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'build-info.json') -Raw | ConvertFrom-Json
+if ($taskManifest.windows_support.$PythonVersion -notcontains $TorchBuild) {
+    throw 'This runtime/backend combination is not supported by this bundle. No files were changed.'
+}
+if ($PythonVersion -eq '3.15' -and -not $taskManifest.pytorch315_bindings) {
+    throw 'Python 3.15 requires the corrected PyTorch binding payload. No files were changed.'
+}
 foreach ($taskEntry in $taskManifest.files) {
     $taskFile = Join-Path $PSScriptRoot $taskEntry.path
     if (-not (Test-Path -LiteralPath $taskFile) -or (Get-FileHash -LiteralPath $taskFile -Algorithm SHA256).Hash -ne $taskEntry.sha256) {
@@ -24,10 +28,29 @@ Write-Host ('Creating an isolated PyLaia environment with Python ' + $PythonVers
 & $taskRuntime -m venv $InstallationPath
 if ($LASTEXITCODE -ne 0) { throw 'Could not create the Python environment.' }
 $taskPython = Join-Path $InstallationPath 'Scripts\python.exe'
+& $taskPython -m pip install --upgrade 'pip==26.2.1'
+if ($LASTEXITCODE -ne 0) { throw 'Isolated installer update failed.' }
 $taskTorchIndex = 'https://download.pytorch.org/whl/cpu'
 if ($TorchBuild -eq 'CUDA') { $taskTorchIndex = 'https://download.pytorch.org/whl/cu130' }
-Write-Host ('Installing official PyTorch packages (' + $TorchBuild + ')')
-& $taskPython -m pip install --no-deps 'torch==2.14.1' 'torchvision==0.29.1' --index-url $taskTorchIndex
+Write-Host ('Installing PyTorch packages (' + $TorchBuild + ')')
+if ($PythonVersion -eq '3.15') {
+    if ($TorchBuild -eq 'CUDA') { $taskTorchIndex = 'https://download.pytorch.org/whl/cu132' }
+    $taskBuildName = $TorchBuild.ToLowerInvariant()
+    $taskPayload = Join-Path $PSScriptRoot ('torch315\' + $taskBuildName)
+    $taskTorchWheels = Join-Path $InstallationPath 'torch-wheels'
+    $taskAssembler = Join-Path $PSScriptRoot 'build-tools\assemble_torch315_wheel.py'
+    $taskAssemblerArgs = @('-I', $taskAssembler, '--build', $TorchBuild, '--payload', $taskPayload, '--output-dir', $taskTorchWheels)
+    if ($OriginalTorchWheel) { $taskAssemblerArgs += @('--original-wheel', $OriginalTorchWheel) }
+    & $taskPython @taskAssemblerArgs
+    if ($LASTEXITCODE -ne 0) { throw 'Verified Python 3.15 PyTorch wheel assembly failed.' }
+    $taskTorchVersion = $taskManifest.pytorch315_bindings.$taskBuildName.version
+    $taskTorchWheel = Join-Path $taskTorchWheels ('torch-' + $taskTorchVersion + '-cp315-cp315-win_amd64.whl')
+    & $taskPython -m pip install --no-deps $taskTorchWheel
+    if ($LASTEXITCODE -ne 0) { throw 'Corrected PyTorch installation failed.' }
+    & $taskPython -m pip install --no-deps 'torchvision==0.29.1' --index-url $taskTorchIndex
+} else {
+    & $taskPython -m pip install --no-deps 'torch==2.14.1' 'torchvision==0.29.1' --index-url $taskTorchIndex
+}
 if ($LASTEXITCODE -ne 0) { throw 'PyTorch installation failed.' }
 Write-Host 'Installing local Flashlight/KenLM and PyLaia'
 $taskWheelFolder = Join-Path $PSScriptRoot ('wheels\' + $taskTag)

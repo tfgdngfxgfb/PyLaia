@@ -1,29 +1,39 @@
-# PyLaia 1.2.2+fork.20261014
+# PyLaia 1.2.3+fork.20261014
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.2+fork.20261014`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.3+fork.20261014`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
 
-- Python **3.14.8** (recommended for GPU), also Python **3.13.16**.
-- Python **3.15.0**: single-device **CPU only on Windows** in this release.
+- Python **3.15.0**: single-device **CPU and NVIDIA GPU on Windows**, using the
+  supplied corrected PyTorch bindings. The Windows installer defaults to 3.15/CUDA.
+- Python **3.14.8** and **3.13.16** retain CPU and NVIDIA GPU support.
 - PyTorch **2.14.1**, TorchVision **0.29.1**, Lightning **2.6.6**.
 - NumPy **2.5.4**, with the same Python 3.13/3.14/3.15 support.
-- CPU, or NVIDIA CUDA 13.0 with a compatible driver and cuDNN enabled.
-- Python 3.13/3.14 retain CPU and NVIDIA GPU support. Free-threaded Python is not supported.
+- CUDA **13.2** on Python 3.15; CUDA **13.0** on 3.13/3.14, with a compatible driver
+  and cuDNN enabled. Free-threaded Python is not supported.
 
-On Windows, official Torch 2.14.1 CUDA 13.0 **and** CUDA 12.6 wheels for Python
-3.15 reproduce a native autograd-thread shutdown crash, even without PyLaia.
-Gloo/distributed execution on Windows 3.15 also crashes. This build rejects those
-known-crashing combinations with a clear error instead of hiding their exit status.
-Use Python 3.14 for GPU/distributed work and the official CPU wheel for Python 3.15.
-No CUDA DLLs are replaced and cuDNN is not disabled. `torch.compile` is not supported
-on 3.15 by the pinned Torch release; PyLaia's existing eager workflow does not need it.
+The official Windows Torch 2.14.1 CPU and CUDA wheels have a CPython 3.15 thread-state
+ABI mismatch in Python autograd callbacks. CUDA 12.6, 13.0 and 13.2 also reproduce a
+native shutdown crash without PyLaia. The supplied 3.15 binding builds are compiled
+against the actual 3.15 headers: `2.14.1+pylaia315cpu` and `2.14.1+pylaia315cu132`.
+The official computation libraries and CUDA/cuDNN DLLs are retained unchanged.
+Do not install the uncorrected official 3.15 wheels directly; PyLaia rejects them.
+
+Windows 3.15 distributed/Gloo execution remains unvalidated and blocked; use
+3.13/3.14 for distributed training. `torch.compile` on 3.15 is unsupported by the
+pinned Torch release. PyLaia's eager workflow does not require it. cuDNN and RNN
+dropout remain enabled and unchanged throughout execution.
+
+Python dependencies are updated to the latest compatible stable versions at build
+time. `mpmath` remains at 1.3.0 because current SymPy requires `<1.4`; forcing 1.4.1
+would break dependency constraints. Torch's vendored native components remain at
+the versions matched to its stable release, rather than being independently swapped.
 
 Dependencies are pinned in [pyproject.toml](pyproject.toml). Do not install the unrelated
 upstream PyPI package with `pip install pylaia`; install this checkout or the supplied
@@ -56,21 +66,23 @@ python -c "import torch; print(torch.__version__); print(torch.cuda.is_available
 Data loading defaults to zero worker processes, which is safe on Windows.
 Increase `--data.num_workers` when appropriate.
 
-### Python 3.15 on Windows (CPU)
+### Python 3.15 on Windows (CPU or NVIDIA GPU)
 
-The Windows bundle includes all three runtimes. Select 3.15 explicitly:
+The Windows bundle includes all three runtimes and the corrected binding binaries:
 
 ```powershell
+.\Install-PyLaia.ps1 -PythonVersion 3.15 -TorchBuild CUDA
 .\Install-PyLaia.ps1 -PythonVersion 3.15 -TorchBuild CPU
 ```
 
-For a source checkout, create a 3.15 environment, install CPU Torch/TorchVision
-from the official CPU index using the versions above, then run the native build
-script with that interpreter before installing `.[test,dev,language-model]`.
-Rebuilding 3.15's python-bidi additionally requires Rust/Cargo. The bundle includes
-ready-made python-bidi and PyYAML wheels, so end users need no C++ compiler or Rust.
-Torch/TorchVision 3.15 wheels are only available from the official PyTorch index,
-not PyPI. Keep `devices=1` and `strategy=auto` on Windows 3.15.
+The installer assembles a normal, versioned Torch wheel from a hash-verified official
+wheel and the bundled corrected bindings before installing it. Other dependencies
+still require network access. No compiler or Rust is needed to install the bundle;
+Flashlight, KenLM, python-bidi and PyYAML binaries are included.
+
+For a source checkout, see [the reproducible native-build instructions](ci/PYTORCH315_BUILD.md).
+Keep `devices=1` and `strategy=auto` on Windows 3.15. Python 3.13/3.14 source
+installation uses the unchanged official Torch commands above.
 
 ## Tools and example
 

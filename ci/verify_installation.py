@@ -1,6 +1,7 @@
 """Quick offline verification of the installed PyLaia and native LM packages."""
 
 import argparse
+import runpy
 import sys
 import tempfile
 from importlib.metadata import version
@@ -10,6 +11,13 @@ import torch
 
 from laia.common.loader import BasicLoader
 from laia.decoders import CTCLanguageDecoder
+
+if __package__:
+    from .verify_torch_runtime import verify_autograd
+else:
+    verify_autograd = runpy.run_path(
+        str(Path(__file__).with_name("verify_torch_runtime.py"))
+    )["verify_autograd"]
 
 TOKENS = "<ctc>\na\ne\nh\ni\ns\nt\n.\n<unk>\n<space>\n"
 LEXICON = "\n".join(f"{token} {token}" for token in TOKENS.splitlines()) + "\n"
@@ -53,11 +61,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--require-cuda", action="store_true")
     args = parser.parse_args()
+    verify_autograd("cpu")
     if args.require_cuda and not torch.cuda.is_available():
         raise RuntimeError(
             "CUDA unavailable: check the NVIDIA driver or install the CPU variant"
         )
     if args.require_cuda:
+        verify_autograd("cuda")
         assert (torch.ones(2, device="cuda") * 2).sum().item() == 4
         assert torch.backends.cudnn.enabled
         model = torch.nn.LSTM(16, 16, 2, bidirectional=True, dropout=0.5).cuda()

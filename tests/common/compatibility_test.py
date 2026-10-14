@@ -6,6 +6,7 @@ from unittest.mock import Mock
 import pytest
 import torch
 
+from ci.verify_torch_runtime import verify_autograd
 from laia.common import compatibility
 
 
@@ -59,7 +60,7 @@ def test_missing_native_cleanup_is_not_called(monkeypatch):
     [
         ("win32", (3, 13), "13.0", False),
         ("win32", (3, 14), "13.0", False),
-        ("win32", (3, 15), None, False),
+        ("win32", (3, 15), None, True),
         ("linux", (3, 15), "13.0", False),
         ("win32", (3, 15), "13.0", True),
         ("win32", (3, 15), "12.6", True),
@@ -71,8 +72,35 @@ def test_known_crashing_runtime_is_rejected(
     monkeypatch.setattr(compatibility, "platform", platform)
     monkeypatch.setattr(compatibility, "version_info", python)
     monkeypatch.setattr(torch.version, "cuda", cuda)
+    monkeypatch.setattr(torch, "__version__", "2.14.1+cpu")
+    monkeypatch.setattr(torch.version, "_pylaia_python315_abi", None, raising=False)
     if blocked:
         with pytest.raises(RuntimeError, match="autograd-thread shutdown crash"):
+            compatibility.ensure_supported_runtime()
+    else:
+        compatibility.ensure_supported_runtime()
+
+
+@pytest.mark.parametrize(
+    "version,cuda,marker,blocked",
+    [
+        ("2.14.1+pylaia315cpu", None, 1, False),
+        ("2.14.1+pylaia315cu132", "13.2", 1, False),
+        ("2.14.1+pylaia315cu132", "13.0", 1, True),
+        ("2.14.1+pylaia315cpu", None, None, True),
+        ("2.14.1+cu132", "13.2", 1, True),
+    ],
+)
+def test_windows315_requires_rebuilt_bindings(
+    monkeypatch, version, cuda, marker, blocked
+):
+    monkeypatch.setattr(compatibility, "platform", "win32")
+    monkeypatch.setattr(compatibility, "version_info", (3, 15))
+    monkeypatch.setattr(torch, "__version__", version)
+    monkeypatch.setattr(torch.version, "cuda", cuda)
+    monkeypatch.setattr(torch.version, "_pylaia_python315_abi", marker, raising=False)
+    if blocked:
+        with pytest.raises(RuntimeError, match="incompatible thread-state ABI"):
             compatibility.ensure_supported_runtime()
     else:
         compatibility.ensure_supported_runtime()
@@ -96,6 +124,7 @@ def test_windows315_distributed_settings_are_rejected(
 ):
     monkeypatch.setattr(compatibility, "platform", "win32")
     monkeypatch.setattr(compatibility, "version_info", (3, 15))
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
     if blocked:
         with pytest.raises(RuntimeError, match="single-device CPU"):
             compatibility.ensure_supported_trainer(strategy, devices, nodes)
@@ -103,11 +132,30 @@ def test_windows315_distributed_settings_are_rejected(
         compatibility.ensure_supported_trainer(strategy, devices, nodes)
 
 
+@pytest.mark.parametrize("devices", ["auto", -1, "-1"])
+def test_windows315_automatic_gpu_count_is_checked(monkeypatch, devices):
+    monkeypatch.setattr(compatibility, "platform", "win32")
+    monkeypatch.setattr(compatibility, "version_info", (3, 15))
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 2)
+    with pytest.raises(RuntimeError, match="single-device"):
+        compatibility.ensure_supported_trainer("auto", devices, 1, accelerator="gpu")
+    compatibility.ensure_supported_trainer("auto", devices, 1, accelerator="cpu")
+
+
 def test_older_python_retains_distributed_settings(monkeypatch):
     monkeypatch.setattr(compatibility, "platform", "win32")
     for python in ((3, 13), (3, 14)):
         monkeypatch.setattr(compatibility, "version_info", python)
         compatibility.ensure_supported_trainer("ddp_spawn", 2, 2)
+
+
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_plain_torch_autograd_exits_normally(device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA is unavailable")
+    # Deliberately no PyLaia import in the child. CUDA builds initialize
+    # autograd device threads even for CPU gradients on a GPU-equipped host.
+    verify_autograd(device)
 
 
 @pytest.mark.skipif(

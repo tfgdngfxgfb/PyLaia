@@ -9,18 +9,30 @@ _cleanup_registered = False
 
 
 def ensure_supported_runtime():
-    """Fail before training with a known-crashing Windows/Python/Torch combination."""
-    if platform == "win32" and version_info[:2] == (3, 15) and torch.version.cuda:
+    """Reject Windows 3.15 wheels built against an incompatible thread-state ABI."""
+    if platform != "win32" or version_info[:2] != (3, 15):
+        return
+    supported = {
+        "2.14.1+pylaia315cpu": None,
+        "2.14.1+pylaia315cu132": "13.2",
+    }
+    version = str(torch.__version__)
+    if (
+        version not in supported
+        or supported[version] != torch.version.cuda
+        or getattr(torch.version, "_pylaia_python315_abi", None) != 1
+    ):
         raise RuntimeError(
-            "Windows Python 3.15 with the pinned PyTorch 2.14.1 CUDA build has a "
-            "native autograd-thread shutdown crash. Use Python 3.13/3.14 for GPU "
-            "or install the official CPU PyTorch build for Python 3.15. "
-            "cuDNN has not been disabled."
+            "Official Windows Python 3.15 PyTorch 2.14.1 wheels have an incompatible "
+            "thread-state ABI in Python autograd callbacks (CPU and CUDA), including "
+            "a native autograd-thread shutdown crash on CUDA. Install the corrected "
+            "Python 3.15 PyTorch bindings supplied with this build, or use Python "
+            "3.13/3.14. cuDNN has not been disabled."
         )
 
 
-def ensure_supported_trainer(strategy, devices, num_nodes):
-    """Reject Windows 3.15 distributed configurations before Gloo can crash."""
+def ensure_supported_trainer(strategy, devices, num_nodes, *, accelerator="auto"):
+    """Keep Windows 3.15 on single-device execution until distributed is validated."""
     if platform != "win32" or version_info[:2] != (3, 15):
         return
     from pytorch_lightning.strategies import ParallelStrategy
@@ -32,6 +44,8 @@ def ensure_supported_trainer(strategy, devices, num_nodes):
         if isinstance(devices, int) or isinstance(devices, str) and devices.isdigit()
         else 1
     )
+    if devices in ("auto", -1, "-1") and accelerator in ("auto", "gpu", "cuda"):
+        device_count = max(torch.cuda.device_count(), 1)
     if (
         isinstance(strategy, str)
         and strategy.startswith(("ddp", "fsdp", "deepspeed"))
@@ -40,8 +54,8 @@ def ensure_supported_trainer(strategy, devices, num_nodes):
         or num_nodes > 1
     ):
         raise RuntimeError(
-            "Windows Python 3.15 supports single-device CPU execution only in this "
-            "build. PyTorch 2.14.1 Gloo/distributed execution has a native crash. "
+            "Windows Python 3.15 supports single-device CPU or CUDA execution only "
+            "in this build. Distributed/Gloo execution is not validated. "
             "Use devices=1 and strategy=auto, or Python 3.13/3.14."
         )
 

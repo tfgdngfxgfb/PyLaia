@@ -1,6 +1,20 @@
 [#releases]
 = Releases
 
+== 1.2.3 — Python 3.15 native ABI and GPU compatibility
+
+* Rebuilt Windows PyTorch 2.14.1 Python bindings against CPython 3.15 headers,
+  retaining official CPU/CUDA computation libraries. CPU and single-GPU 3.15
+  use explicit locally versioned builds; uncorrected official 3.15 wheels are blocked.
+* Added plain-PyTorch callback and normal-shutdown regression checks, including
+  an ABI corruption case that earlier CPU tests did not cover.
+* Updated development tools and all compatible runtime/optional dependency trees.
+  PyTorch 2.14.1 remains the latest stable release; SymPy's mpmath constraint is retained.
+* Included corrected binding payloads and a hash-verifying normal-wheel assembler
+  in the Windows bundle. cuDNN, dropout, package/import/command names are unchanged.
+* Python 3.13/3.14 support is retained. Windows 3.15 distributed execution remains
+  unvalidated; free-threaded Python and 3.15 torch.compile are unsupported.
+
 == 1.2.2 — NumPy maintenance update
 
 * Updated NumPy from 2.5.3 to 2.5.4. Other dependency requirements are unchanged.

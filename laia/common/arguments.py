@@ -310,7 +310,9 @@ class TrainerArgs(make_dataclass("", __get_trainer_fields())):
         """Arguments accepted by Lightning; refresh rate belongs to our callback."""
         from laia.common.compatibility import ensure_supported_trainer
 
-        ensure_supported_trainer(self.strategy, self.devices, self.num_nodes)
+        ensure_supported_trainer(
+            self.strategy, self.devices, self.num_nodes, accelerator=self.accelerator
+        )
         return {
             key: value
             for key, value in vars(self).items()

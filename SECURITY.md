@@ -1,4 +1,4 @@
-# Security notes — PyLaia 1.2.2+fork.20261014
+# Security notes — PyLaia 1.2.3+fork.20261014
 
 Review dates: 2026-10-07 and 2026-10-14. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
@@ -34,9 +34,74 @@ This is a targeted engineering review, not a formal penetration test or guarante
   the pinned version's `_C._cudnn_clear_dropout_state()` binding. This avoids a
   reproduced native exit failure without disabling cuDNN or changing dropout.
   The handler does not initialize CUDA, alter computation or force a success code;
-  it is only registered on Windows CUDA builds. No external DLLs are substituted.
+  it is only registered on Windows CUDA builds. Computation/CUDA/cuDNN DLLs are
+  unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Python 3.15 ABI correction and dependency maintenance (2026-10-14)
+
+- Deeper regression coverage found that the official Windows 3.15 **CPU** wheel
+  also temporarily corrupts the thread-state dictionary pointer during Python
+  autograd callbacks. Earlier passing CPU suites did not cover this invariant and
+  are not sufficient evidence of a safe ABI. The official CUDA 13.2 wheel reproduces
+  the same shutdown failure as CUDA 13.0/12.6. Uncorrected 3.15 wheels are now blocked.
+- The corrected bindings are rebuilt from PyTorch 2.14.1 commit
+  `5c4886908584029761b579af026dcfb627c84070` against actual CPython 3.15 headers.
+  Source adjustments affect Windows CMake/build rules, not C++ computation algorithms.
+  Official CPU/CUDA computation libraries and CUDA/cuDNN DLLs remain byte-identical
+  to their SHA-256-verified source wheels. No native exception or exit code is suppressed.
+- Plain Torch subprocess checks require aligned thread-state dictionary pointers
+  inside Python backward callbacks, correct gradients and normal exit. These checks
+  run without a PyLaia import and are shared by regression tests, CI and the installer.
+  Both corrected binding variants pass these checks, including CPU callbacks in
+  the CUDA build. Full release validation is recorded below.
+- Development tools updated to pre-commit 4.7.0, Ruff 0.17.0 and tox 4.65.5. Runtime
+  and optional dependencies were upgraded eagerly to current compatible releases,
+  including filelock 4.1.2, fonttools 4.67.0 and the WandB dependency tree. PyTorch
+  2.14.1 is still the latest stable release. SymPy's `mpmath<1.4` requirement is preserved.
+- Installed dependency base-release audits on 3.13, 3.14 and 3.15 report no known
+  advisories. Audit pins are derived from package metadata, including locally
+  installed wheel versions; direct-file URLs do not bypass the base-release audit.
+- Wheel assembly checks original and replacement SHA-256 hashes, rejects unsafe
+  paths and unknown payload sources, preserves licenses/core files, regenerates
+  wheel RECORD hashes, and refuses to overwrite an existing output. Seven packaging
+  regression tests pass. Native SDK archives use pinned NVIDIA SHA-256 hashes;
+  the SDK is task-local and never installs drivers or changes the system PATH.
+- Native Protobuf 3.21.12 remains pinned by Torch's source commit. The published
+  [C++ JSON use-after-free](https://github.com/protocolbuffers/protobuf/security/advisories/GHSA-h5g9-ghrj-76p5)
+  was introduced in 4.22.0, not this branch; the
+  [2022 C++ parsing DoS](https://github.com/protocolbuffers/protobuf/security/advisories/GHSA-8gq9-2x98-w8hf)
+  is fixed by 3.21.6. This targeted advisory review is not a formal audit
+  of all vendored binaries. Python Protobuf is independently updated to 7.36.2.
+
+- Final full local regressions all complete with exit status 0 and no failed tests:
+
+  | Runtime | Passed | Skipped | Expected failures |
+  | --- | ---: | ---: | ---: |
+  | Python 3.13.16 / official CPU | 1229 | 9 | 2 |
+  | Python 3.14.8 / official CUDA 13.0 | 1276 | 5 | 2 |
+  | Python 3.15.0 / corrected CPU | 1225 | 13 | 2 |
+  | Python 3.15.0 / corrected CUDA 13.2 | 1272 | 9 | 2 |
+
+  GPU runs retain cuDNN and unchanged dropout. Two single-process Gloo callback
+  tests now pass and no longer skip on 3.15; this does not validate multi-process
+  distributed training, which remains blocked on Windows 3.15.
+- Fresh isolated installs from the validation bundle pass on both Python 3.15
+  CPU and CUDA: manifest checksums, normal wheel assembly, `pip check`, plain
+  Torch autograd callbacks/normal exit, real Flashlight/KenLM decoding with Unicode
+  paths, safe checkpoint loading and GPU LSTM forward/backward with cuDNN enabled.
+  The installer verifier also works with Python's isolated `-I` mode.
+- Installed-wheel GPU smoke checks also pass on Python 3.13 and 3.14 with the same
+  isolated verifier. A final advisory audit of the fresh 3.15 GPU environment finds
+  no known vulnerabilities in the audited base releases.
+- Original-versus-corrected wheel RECORD comparisons preserve 12,205 CPU and
+  12,241 CUDA file entries byte-for-byte. Only the three Python-binding binaries,
+  `torch/version.py` and distribution metadata differ, with RECORD regenerated.
+  An offline WandB run also completes normally with the corrected 3.15 GPU build.
+
+The following sections are historical validation records. Their original 3.15 CPU-only
+support statement is superseded by the corrected-binding requirement above.
 
 ### NumPy maintenance update (2026-10-14)
 
@@ -137,7 +202,8 @@ This is a targeted engineering review, not a formal penetration test or guarante
 Restricted loading is not a sandbox; huge/malformed tensors, images, ARPA models
 or archives can still exhaust resources or reach bugs in native libraries.
 Only process trusted data and models. Keep the operating system and NVIDIA driver
-updated. The default CUDA installation requires a driver supporting CUDA 13.0.
+updated. The default Python 3.15 CUDA installation requires a driver supporting
+CUDA 13.2; Python 3.13/3.14 CUDA installations require CUDA 13.0 driver support.
 
 WandB/network logging is opt-in. Ordinary training stays local, but installing
 available dependencies contacts official PyTorch/PyPI services. The Windows build
@@ -145,7 +211,8 @@ includes Flashlight/KenLM locally and is not a fully offline PyTorch distributio
 
 Docker, Linux native language-model builds, multi-GPU training and free-threaded
 CPython have not been verified by the local Windows run. Windows Python 3.15
-GPU and distributed execution are explicitly unsupported and blocked.
+supports single-device CPU/CUDA with the corrected bindings only; distributed
+and multi-device execution are explicitly unsupported and blocked.
 Inherited tests depending on unavailable external pretrained files remain skipped.
 The cuDNN shutdown fix relies on an internal API of the pinned Torch release.
 Retest its native cleanup and process exit when upgrading Torch. It is not a

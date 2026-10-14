@@ -1,7 +1,9 @@
 """Assemble a Windows bundle with isolated Python runtimes and local LM wheels."""
 
+import argparse
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import tomllib
@@ -13,10 +15,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--suffix", default="", help="Optional label for a separate validation bundle"
+    )
+    args = parser.parse_args()
+    if args.suffix and not re.fullmatch(r"[a-z0-9-]{1,32}", args.suffix):
+        parser.error("--suffix must contain 1-32 lowercase letters, digits or hyphens")
     with (ROOT / "pyproject.toml").open("rb") as stream:
         project = tomllib.load(stream)["project"]
     version = project["version"]
     name = f"PyLaia-{version.replace('+', '-')}-Windows-x64"
+    if args.suffix:
+        name += "-" + args.suffix
     destination = ROOT / "dist" / name
     if destination.exists():
         raise RuntimeError(f"Build folder already exists: {destination}")
@@ -59,6 +70,12 @@ def main():
     for source, target in (
         ("ci/install-windows.ps1", "Install-PyLaia.ps1"),
         ("ci/verify_installation.py", "verify-installation.py"),
+        ("ci/verify_torch_runtime.py", "verify_torch_runtime.py"),
+        ("ci/assemble_torch315_wheel.py", "build-tools/assemble_torch315_wheel.py"),
+        ("ci/build_torch315.py", "build-tools/build_torch315.py"),
+        ("ci/build-torch315.ps1", "build-tools/build-torch315.ps1"),
+        ("ci/prepare_cuda_sdk.py", "build-tools/prepare_cuda_sdk.py"),
+        ("ci/PYTORCH315_BUILD.md", "build-tools/PYTORCH315_BUILD.md"),
         ("ci/build_language_model.py", "build-tools/build_language_model.py"),
         ("ci/build-language-model.ps1", "build-tools/build-language-model.ps1"),
         ("ci/WINDOWS_BUILD_README.txt", "LES-MEG.txt"),
@@ -70,6 +87,13 @@ def main():
         target_path = destination / target
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / source, target_path)
+    bindings = {}
+    for backend in ("cpu", "cuda"):
+        source = ROOT / "dist/pytorch315" / backend
+        bindings[backend] = json.loads(
+            (source / "build-info.json").read_text(encoding="utf-8")
+        )
+        shutil.copytree(source, destination / "torch315" / backend)
     manifest = {
         "product": "PyLaia",
         "distribution": project["name"],
@@ -83,8 +107,9 @@ def main():
         "windows_support": {
             "3.13": ["CPU", "CUDA"],
             "3.14": ["CPU", "CUDA"],
-            "3.15": ["CPU"],
+            "3.15": ["CPU", "CUDA"],
         },
+        "pytorch315_bindings": bindings,
         "windows315_distributed_supported": False,
         "requires_network_for_other_dependencies": True,
         "files": [],

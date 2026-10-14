@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylaia"
-version = "1.2.2+fork.20261014"
+version = "1.2.3+fork.20261014"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
@@ -56,13 +56,13 @@ Tracker = "https://github.com/tfgdngfxgfb/PyLaia-fork/issues"
 
 [project.optional-dependencies]
 dev = [
-    "pre-commit==4.6.2",
-    "ruff==0.16.10",
+    "pre-commit==4.7.0",
+    "ruff==0.17.0",
     "build>=1.2",
     "pip-audit==2.10.1",
 ]
 test = [
-    "tox==4.64.9",
+    "tox==4.65.5",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
     "pandas>=2.2",
