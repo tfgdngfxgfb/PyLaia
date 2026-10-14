@@ -9,6 +9,7 @@ import argparse
 import ctypes
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -17,14 +18,24 @@ import venv
 import zipfile
 from pathlib import Path
 
-from assemble_torch315_wheel import (
-    BUILDS,
-    SOURCE_COMMIT,
-    assemble,
-    digest,
-    download_original,
-)
-from build_language_model import replace_source
+if __package__:
+    from .assemble_torch315_wheel import (
+        BUILDS,
+        SOURCE_COMMIT,
+        assemble,
+        digest,
+        download_original,
+    )
+    from .build_language_model import replace_source
+else:
+    from assemble_torch315_wheel import (
+        BUILDS,
+        SOURCE_COMMIT,
+        assemble,
+        digest,
+        download_original,
+    )
+    from build_language_model import replace_source
 
 ROOT = Path(__file__).resolve().parents[1]
 UV_COMMIT = "840404ce8ba7cc0204be52389a6cfff9f2c90fb6"
@@ -53,6 +64,43 @@ SUBMODULES = (
 
 def run(*args, **kwargs):
     subprocess.run([str(arg) for arg in args], check=True, **kwargs)
+
+
+def print_build_errors(log):
+    errors = []
+    context = 0
+    secrets = [
+        value
+        for name, value in os.environ.items()
+        if re.search(r"TOKEN|SECRET|PASSWORD|CREDENTIAL|KEY", name, re.I)
+        and len(value) >= 4
+    ]
+    with log.open(encoding="utf-8", errors="replace") as stream:
+        for line in stream:
+            line = re.sub(r"\x1b\[[0-9;]*m", "", line).rstrip()
+            if re.search(
+                r"CMake Error|\b(?:fatal error|error (?:C|LNK|MSB)\d+):|^\s*ERROR:|^\s*ninja: (?:error|build stopped)",
+                line,
+            ):
+                context = 5
+            elif not line.strip():
+                context = 0
+            if context:
+                if re.match(r"\s*(?:(?:set|export) )?[A-Za-z_][A-Za-z0-9_]*=", line):
+                    continue
+                for secret in secrets:
+                    line = line.replace(secret, "[REDACTED]")
+                line = re.sub(
+                    r"https?://[^\s/@]+:[^\s/@]+@", "https://[REDACTED]@", line
+                )
+                errors.append(line[:1000])
+                context -= 1
+    print("Native build error summary (full log remains local):", flush=True)
+    print(
+        "\n".join(errors[-40:])
+        or "No recognized compiler/CMake error; inspect the local log.",
+        flush=True,
+    )
 
 
 def short_path(path):
@@ -407,6 +455,8 @@ def main():
         try:
             run(*command, env=env, stdout=stream, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
+            stream.flush()
+            print_build_errors(log)
             raise RuntimeError(
                 f"Native binding build failed; inspect the local log: {log}"
             ) from None
