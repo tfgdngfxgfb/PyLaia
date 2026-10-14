@@ -9,8 +9,8 @@ from ci.build_torch315 import ninja_executable, print_build_errors
 def test_native_ci_and_launchers_use_visual_studio_2022():
     root = Path(__file__).resolve().parents[2]
     workflow = yaml.safe_load((root / ".github/workflows/build.yml").read_text())
-    assert workflow["jobs"]["torch315-windows"]["runs-on"] == "windows-2025"
-    assert workflow["jobs"]["language-model"]["runs-on"] == "windows-2025"
+    assert workflow["jobs"]["torch315-windows"]["runs-on"] == "windows-2022"
+    assert workflow["jobs"]["language-model"]["runs-on"] == "windows-2022"
     for name in ("build-torch315.ps1", "build-language-model.ps1"):
         script = (root / "ci" / name).read_text(encoding="utf-8")
         assert "-version '[17.0,18.0)'" in script

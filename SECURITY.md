@@ -46,7 +46,9 @@ This is a targeted engineering review, not a formal penetration test or guarante
   execution error; the same failure is reported in
   [vcpkg's tracker](https://github.com/microsoft/vcpkg/issues/51763). The local
   Visual Studio 2022 build passes configuration and compiles. CI now explicitly
-  uses `windows-2025` (VS 2022), and both native launchers select VS major version 17.
+  uses `windows-2022` (VS 2022), and both native launchers select VS major version 17.
+  Both `windows-latest` and `windows-2025` routed to VS 2026 in the observed runs;
+  the latter was not sufficient to select the older compiler image.
   No PyLaia tests or feature checks are forced to pass.
 - The builder also verifies and explicitly selects the native `Scripts/ninja.exe`
   using a forward-slash CMake path. This alone did not resolve the VS 2026 failure.
