@@ -8,8 +8,8 @@ $taskVsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Insta
 if (-not (Test-Path -LiteralPath $taskVsWhere)) {
     throw 'Install Visual Studio 2022 Build Tools with Desktop development with C++ first.'
 }
-$taskCompiler = & $taskVsWhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-if (-not $taskCompiler) { throw 'No MSVC x64 C++ compiler found.' }
+$taskCompiler = & $taskVsWhere -latest -version '[17.0,18.0)' -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+if (-not $taskCompiler) { throw 'Visual Studio 2022 MSVC x64 Build Tools are required.' }
 $taskVcVars = Join-Path $taskCompiler 'VC\Auxiliary\Build\vcvars64.bat'
 $taskEnvironment = & $env:ComSpec /d /c ('call "' + $taskVcVars + '" >nul && set')
 if ($LASTEXITCODE -ne 0) { throw 'Compiler setup failed.' }

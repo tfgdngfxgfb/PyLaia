@@ -1,6 +1,19 @@
+from pathlib import Path
+
 import pytest
+import yaml
 
 from ci.build_torch315 import ninja_executable, print_build_errors
+
+
+def test_native_ci_and_launchers_use_visual_studio_2022():
+    root = Path(__file__).resolve().parents[2]
+    workflow = yaml.safe_load((root / ".github/workflows/build.yml").read_text())
+    assert workflow["jobs"]["torch315-windows"]["runs-on"] == "windows-2025"
+    assert workflow["jobs"]["language-model"]["runs-on"] == "windows-2025"
+    for name in ("build-torch315.ps1", "build-language-model.ps1"):
+        script = (root / "ci" / name).read_text(encoding="utf-8")
+        assert "-version '[17.0,18.0)'" in script
 
 
 def test_windows_ninja_uses_existing_exe_not_extensionless_path(tmp_path):
@@ -38,7 +51,17 @@ def test_build_error_summary_preserves_errors_not_environment(tmp_path, capsys):
     assert "Required build input is missing" in output
     assert "fatal error C1083" in output
     assert "must-not-be-published" not in output
-    assert "irrelevant-argument" not in output
+
+
+def test_build_error_summary_retains_preceding_os_failure(tmp_path, capsys):
+    log = tmp_path / "build.log"
+    log.write_text(
+        "  The system cannot find the path specified.\n"
+        "  CMake Error: Generator: build tool execution failed\n",
+        encoding="utf-8",
+    )
+    print_build_errors(log)
+    assert "The system cannot find the path specified" in capsys.readouterr().out
 
 
 def test_build_error_summary_redacts_credentials(tmp_path, capsys, monkeypatch):

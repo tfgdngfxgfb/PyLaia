@@ -11,14 +11,16 @@ The original standard Torch wheel and other public dependencies still require
 network access; `-OriginalTorchWheel` accepts a previously downloaded official wheel.
 
 To reproduce the native build, use Windows x64, standard GIL-enabled CPython
-3.15, Git, and MSVC x64 Build Tools. Build inputs are pinned to PyTorch commit
+3.15, Git, and Visual Studio 2022 MSVC x64 Build Tools (v143). Build inputs are pinned to PyTorch commit
 `5c4886908584029761b579af026dcfb627c84070`; selected submodules use its recorded
 commits. CMake adjustments are explicit in `build_torch315.py`. There are no C++
 algorithm patches. Build directories, SDKs and environments remain project-local.
 
 The builder verifies the build environment's `Scripts/ninja.exe` and passes its
-explicit forward-slash path as `CMAKE_MAKE_PROGRAM`. This avoids extensionless
-Ninja discovery during nested Windows CMake compiler checks. Failures print a
+explicit forward-slash path as `CMAKE_MAKE_PROGRAM`. CI uses `windows-2025`
+(Visual Studio 2022), not the moving `windows-latest`/VS 2026 toolchain that fails
+SLEEF's builtin-math compiler probe. Both native-build launchers explicitly select
+Visual Studio major version 17. Failures print a
 limited, credential-filtered error summary; full native logs remain local.
 
 CPU:

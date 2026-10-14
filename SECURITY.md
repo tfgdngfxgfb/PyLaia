@@ -41,9 +41,15 @@ This is a targeted engineering review, not a formal penetration test or guarante
 
 ### Windows CI build maintenance (2026-10-14)
 
-- The Windows 3.15 CI rebuild failed when CMake could not execute the extensionless
-  Ninja path during a compiler check. The builder now verifies and explicitly
-  selects the native `Scripts/ninja.exe` using a forward-slash CMake path.
+- The moving `windows-latest` image selected Visual Studio 2026/MSVC 19.51. The
+  3.15 native rebuild fails at SLEEF's builtin-math compiler probe with a generator
+  execution error; the same failure is reported in
+  [vcpkg's tracker](https://github.com/microsoft/vcpkg/issues/51763). The local
+  Visual Studio 2022 build passes configuration and compiles. CI now explicitly
+  uses `windows-2025` (VS 2022), and both native launchers select VS major version 17.
+  No PyLaia tests or feature checks are forced to pass.
+- The builder also verifies and explicitly selects the native `Scripts/ninja.exe`
+  using a forward-slash CMake path. This alone did not resolve the VS 2026 failure.
 - Native build failures emit a bounded diagnostic excerpt, not a complete native
   log or environment dump. Known credential environment values and URL passwords
   are redacted; assignment lines are excluded. Regression tests cover error

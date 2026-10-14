@@ -16,6 +16,7 @@ import sys
 import sysconfig
 import venv
 import zipfile
+from collections import deque
 from pathlib import Path
 
 if __package__:
@@ -68,6 +69,7 @@ def run(*args, **kwargs):
 
 def print_build_errors(log):
     errors = []
+    previous = deque(maxlen=8)
     context = 0
     secrets = [
         value
@@ -78,23 +80,26 @@ def print_build_errors(log):
     with log.open(encoding="utf-8", errors="replace") as stream:
         for line in stream:
             line = re.sub(r"\x1b\[[0-9;]*m", "", line).rstrip()
+            if re.match(r"\s*(?:(?:set|export) )?[A-Za-z_][A-Za-z0-9_]*=", line):
+                continue
+            for secret in secrets:
+                line = line.replace(secret, "[REDACTED]")
+            line = re.sub(r"https?://[^\s/@]+:[^\s/@]+@", "https://[REDACTED]@", line)[
+                :1000
+            ]
             if re.search(
                 r"CMake Error|\b(?:fatal error|error (?:C|LNK|MSB)\d+):|^\s*ERROR:|^\s*ninja: (?:error|build stopped)",
                 line,
             ):
+                if not context:
+                    errors.extend(previous)
                 context = 5
             elif not line.strip():
                 context = 0
             if context:
-                if re.match(r"\s*(?:(?:set|export) )?[A-Za-z_][A-Za-z0-9_]*=", line):
-                    continue
-                for secret in secrets:
-                    line = line.replace(secret, "[REDACTED]")
-                line = re.sub(
-                    r"https?://[^\s/@]+:[^\s/@]+@", "https://[REDACTED]@", line
-                )
-                errors.append(line[:1000])
+                errors.append(line)
                 context -= 1
+            previous.append(line)
     print("Native build error summary (full log remains local):", flush=True)
     print(
         "\n".join(errors[-40:])

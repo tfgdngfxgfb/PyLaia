@@ -5,6 +5,8 @@
 
 * Explicitly select and verify the native Ninja executable for nested CMake
   compiler checks on Windows. Add bounded, credential-filtered build diagnostics.
+* Pin Windows CI/native rebuilds to Visual Studio 2022/v143, avoiding the moving
+  VS 2026 toolchain's SLEEF configuration failure without skipping any PyLaia tests.
 * Add regression tests for Windows tool selection and diagnostic redaction.
 * Include the revised rebuild instructions/tools in the Windows bundle.
   PyLaia production modules, imports, commands and CPU/GPU behavior are unchanged.
