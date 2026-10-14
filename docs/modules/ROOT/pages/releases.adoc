@@ -1,6 +1,14 @@
 [#releases]
 = Releases
 
+== 1.2.4 — Windows Python 3.15 rebuild maintenance
+
+* Explicitly select and verify the native Ninja executable for nested CMake
+  compiler checks on Windows. Add bounded, credential-filtered build diagnostics.
+* Add regression tests for Windows tool selection and diagnostic redaction.
+* Include the revised rebuild instructions/tools in the Windows bundle.
+  PyLaia production modules, imports, commands and CPU/GPU behavior are unchanged.
+
 == 1.2.3 — Python 3.15 native ABI and GPU compatibility
 
 * Rebuilt Windows PyTorch 2.14.1 Python bindings against CPython 3.15 headers,

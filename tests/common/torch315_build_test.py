@@ -1,4 +1,22 @@
-from ci.build_torch315 import print_build_errors
+import pytest
+
+from ci.build_torch315 import ninja_executable, print_build_errors
+
+
+def test_windows_ninja_uses_existing_exe_not_extensionless_path(tmp_path):
+    program = tmp_path / "Scripts/ninja.exe"
+    program.parent.mkdir()
+    program.write_bytes(b"native executable")
+    assert ninja_executable(tmp_path) == program.as_posix()
+    assert ninja_executable(tmp_path).endswith("/ninja.exe")
+
+
+def test_windows_ninja_does_not_accept_a_non_exe_launcher(tmp_path):
+    program = tmp_path / "Scripts/ninja"
+    program.parent.mkdir()
+    program.write_text("not a native Windows executable", encoding="utf-8")
+    with pytest.raises(FileNotFoundError, match="native Windows Ninja executable"):
+        ninja_executable(tmp_path)
 
 
 def test_build_error_summary_preserves_errors_not_environment(tmp_path, capsys):

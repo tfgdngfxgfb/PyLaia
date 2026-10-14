@@ -110,6 +110,13 @@ def short_path(path):
     return Path(result.value)
 
 
+def ninja_executable(environment):
+    program = environment / "Scripts/ninja.exe"
+    if not program.is_file():
+        raise FileNotFoundError(f"Missing native Windows Ninja executable: {program}")
+    return program.as_posix()
+
+
 def clone(path, repository, tag, commit):
     if not path.exists():
         run(
@@ -319,6 +326,8 @@ def main():
         "Cython==3.3.0",
         "PyYAML==6.0.3",
     )
+    ninja = ninja_executable(environment)
+    run(ninja, "--version")
     uv_source = work / "libuv-source"
     clone(uv_source, "https://github.com/libuv/libuv.git", "v1.53.0", UV_COMMIT)
     uv_install = work / "libuv-install"
@@ -408,6 +417,7 @@ def main():
             "CMAKE_BUILD_TYPE": "Release",
             "CMAKE_C_COMPILER": "cl",
             "CMAKE_CXX_COMPILER": "cl",
+            "CMAKE_MAKE_PROGRAM": ninja,
             "BLAS": "Eigen",
             "Python_EXECUTABLE": str(python),
             "Python_INCLUDE_DIR": str(base / "include"),

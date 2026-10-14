@@ -16,6 +16,11 @@ To reproduce the native build, use Windows x64, standard GIL-enabled CPython
 commits. CMake adjustments are explicit in `build_torch315.py`. There are no C++
 algorithm patches. Build directories, SDKs and environments remain project-local.
 
+The builder verifies the build environment's `Scripts/ninja.exe` and passes its
+explicit forward-slash path as `CMAKE_MAKE_PROGRAM`. This avoids extensionless
+Ninja discovery during nested Windows CMake compiler checks. Failures print a
+limited, credential-filtered error summary; full native logs remain local.
+
 CPU:
 
 ```powershell

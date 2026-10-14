@@ -1,11 +1,11 @@
-# PyLaia 1.2.3+fork.20261014
+# PyLaia 1.2.4+fork.20261014
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.3+fork.20261014`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.4+fork.20261014`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment

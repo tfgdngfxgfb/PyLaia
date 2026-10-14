@@ -1,5 +1,5 @@
-PyLaia 1.2.3+fork.20261014 — privat Windows-bygg
-Versjon 1.2.3+fork.20261014. Dette er ikke den offisielle PyLaia-utgaven.
+PyLaia 1.2.4+fork.20261014 — privat Windows-bygg
+Versjon 1.2.4+fork.20261014. Dette er ikke den offisielle PyLaia-utgaven.
 
 En målrettet Windows-retting rydder PyTorchs cuDNN-dropout-cache ved avslutning,
 før GPU-bibliotekene lukkes. Den unngår et gjenskapt avslutningskrasj.

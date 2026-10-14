@@ -1,4 +1,4 @@
-# Security notes — PyLaia 1.2.3+fork.20261014
+# Security notes — PyLaia 1.2.4+fork.20261014
 
 Review dates: 2026-10-07 and 2026-10-14. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
@@ -38,6 +38,18 @@ This is a targeted engineering review, not a formal penetration test or guarante
   unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Windows CI build maintenance (2026-10-14)
+
+- The Windows 3.15 CI rebuild failed when CMake could not execute the extensionless
+  Ninja path during a compiler check. The builder now verifies and explicitly
+  selects the native `Scripts/ninja.exe` using a forward-slash CMake path.
+- Native build failures emit a bounded diagnostic excerpt, not a complete native
+  log or environment dump. Known credential environment values and URL passwords
+  are redacted; assignment lines are excluded. Regression tests cover error
+  retention, environment exclusion, redaction and Windows executable selection.
+- These changes affect the rebuild tools and release metadata, not PyLaia's
+  production modules, command names, model computation or cuDNN configuration.
 
 ### Python 3.15 ABI correction and dependency maintenance (2026-10-14)
 
