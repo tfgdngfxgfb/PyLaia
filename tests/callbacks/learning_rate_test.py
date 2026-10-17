@@ -42,7 +42,7 @@ def test_learning_rate(tmpdir, num_processes):
         assert not log_filepath_rank1.read_text("utf-8")
 
     assert log_filepath.exists()
-    lines = [l.strip() for l in log_filepath.readlines()]
+    lines = [line.strip() for line in log_filepath.read_text("utf-8").splitlines()]
     for e in range(1, trainer.max_epochs):
         expected = f"E{e}: lr-Adam 1.000e-0{e + 2} ⟶ 1.000e-0{e + 3}"
         assert lines.count(expected) == 1
