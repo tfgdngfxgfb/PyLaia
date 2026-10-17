@@ -1,5 +1,5 @@
-PyLaia 1.2.5+fork.20261017 — privat Windows-bygg
-Versjon 1.2.5+fork.20261017. Dette er ikke den offisielle PyLaia-utgaven.
+PyLaia 1.2.6+fork.20261017 — privat Windows-bygg
+Versjon 1.2.6+fork.20261017. Dette er ikke den offisielle PyLaia-utgaven.
 
 En målrettet Windows-retting rydder PyTorchs cuDNN-dropout-cache ved avslutning,
 før GPU-bibliotekene lukkes. Den unngår et gjenskapt avslutningskrasj.
@@ -10,8 +10,11 @@ Offisielle beregningsbiblioteker og CUDA/cuDNN-DLL-er beholdes uendret.
 Innhold:
 - Opprinnelig pakkenavn pylaia, import laia og pylaia-htr-* kommandoer.
 - Versjonsnummeret skiller bygget fra offisiell PyLaia.
-- Pillow 13.0.0 med nye sikkerhetsrettinger, filelock 4.2.0 og NumPy 2.5.4.
+- Pillow 13.0.0 med nye sikkerhetsrettinger, filelock 4.2.1 og NumPy 2.5.4.
 - Valgfri W&B-logging bruker 0.31.0. Utviklingstester bruker Ruff 0.17.1 og tox 4.66.0.
+- Testverktøy: cachetools 7.2.3, distlib 0.4.4, platformdirs 4.13.3, pluggy 1.7.0,
+  pyproject-api 1.11.7, python-discovery 1.6.3 og virtualenv 21.14.9.
+- mpmath 1.3.0 og valgfri cwevals 0.0.1b1 beholdes uendret og er låst eksplisitt.
 - Python 3.15.0 og 3.14.8, kun brukt i et isolert miljø. Python 3.13 er ikke støttet.
 - Python 3.15 støttes med CPU og én NVIDIA-GPU; 3.14 beholdes også.
 - Ferdige, korrigerte PyTorch 2.14.1-bindinger for 3.15 CPU/CUDA 13.2.

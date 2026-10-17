@@ -1,11 +1,11 @@
-# PyLaia 1.2.5+fork.20261017
+# PyLaia 1.2.6+fork.20261017
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.5+fork.20261017`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.6+fork.20261017`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
@@ -14,7 +14,7 @@ independent build; check it with `pylaia-htr-create-model --version`.
   supplied corrected PyTorch bindings. The Windows installer defaults to 3.15/CUDA.
 - Python **3.14.8** retains CPU and NVIDIA GPU support. Python 3.13 is no longer supported.
 - PyTorch **2.14.1**, TorchVision **0.29.1**, Lightning **2.6.6**.
-- NumPy **2.5.4**, Pillow **13.0.0**, filelock **4.2.0**.
+- NumPy **2.5.4**, Pillow **13.0.0**, filelock **4.2.1**.
 - CUDA **13.2** on Python 3.15; CUDA **13.0** on 3.14, with a compatible driver
   and cuDNN enabled. Free-threaded Python is not supported.
 
@@ -30,14 +30,18 @@ Windows 3.15 distributed/Gloo execution remains unvalidated and blocked; use
 pinned Torch release. PyLaia's eager workflow does not require it. cuDNN and RNN
 dropout remain enabled and unchanged throughout execution.
 
-Python dependencies are updated to the latest compatible stable versions at build
-time. `mpmath` remains at 1.3.0 because current SymPy requires `<1.4`; forcing 1.4.1
+Python dependencies are pinned to the versions reviewed for this release.
+`mpmath` remains at 1.3.0 because current SymPy requires `<1.4`; forcing 1.4.1
 would break dependency constraints. Torch's vendored native components remain at
 the versions matched to its stable release, rather than being independently swapped.
 
 Pillow 13.0.0 addresses newly published security advisories affecting 12.3.0 and
 officially supports Python 3.15. Only process trusted input files. The optional
 W&B extra is 0.31.0; development tools use Ruff 0.17.1 and tox 4.66.0.
+The test extra pins cachetools 7.2.3, distlib 0.4.4, platformdirs 4.13.3,
+pluggy 1.7.0, pyproject-api 1.11.7, python-discovery 1.6.3 and virtualenv 21.14.9.
+mpmath 1.3.0 and W&B's cwevals 0.0.1b1 remain explicitly pinned; no beta upgrade
+or incompatible SymPy dependency override is applied.
 
 Dependencies are pinned in [pyproject.toml](pyproject.toml). Do not install the unrelated
 upstream PyPI package with `pip install pylaia`; install this checkout or the supplied

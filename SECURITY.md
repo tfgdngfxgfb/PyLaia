@@ -1,4 +1,4 @@
-# Security notes — PyLaia 1.2.5+fork.20261017
+# Security notes — PyLaia 1.2.6+fork.20261017
 
 Review dates: 2026-10-07, 2026-10-14 and 2026-10-17. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
@@ -38,6 +38,19 @@ This is a targeted engineering review, not a formal penetration test or guarante
   unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Filelock and reproducible test-tool maintenance (2026-10-17)
+
+- Upgrade filelock from 4.2.0 to 4.2.1. Pin the test toolchain's transitive
+  dependencies: cachetools 7.2.3, distlib 0.4.4, platformdirs 4.13.3,
+  pluggy 1.7.0, pyproject-api 1.11.7, python-discovery 1.6.3 and virtualenv 21.14.9.
+- Preserve mpmath 1.3.0 and cwevals 0.0.1b1 with explicit metadata pins and
+  regressions. SymPy still requires mpmath below 1.4; W&B 0.31.0 requires this
+  exact cwevals beta. W&B remains optional and its integration test is offline.
+- Python 3.14/3.15 support, production modules, original commands, native
+  language-model wheels and corrected PyTorch bindings are unchanged.
+- Historical audit/test results below apply to their stated releases. The new
+  release has its own local test, advisory-audit and final artifact reports.
 
 ### Pillow and supported-runtime maintenance (2026-10-17)
 

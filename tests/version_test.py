@@ -74,8 +74,11 @@ def test_python313_is_not_advertised_or_bundled():
     assert '"3.13"' not in packager
 
 
-@pytest.mark.parametrize("name,expected", [("pillow", "13.0.0"), ("filelock", "4.2.0")])
-def test_upgraded_runtime_dependencies_are_pinned(name, expected):
+@pytest.mark.parametrize(
+    "name,expected",
+    [("pillow", "13.0.0"), ("filelock", "4.2.1"), ("mpmath", "1.3.0")],
+)
+def test_runtime_dependency_versions_are_pinned(name, expected):
     requirement = next(
         Requirement(item)
         for item in distribution("pylaia").requires
@@ -83,3 +86,38 @@ def test_upgraded_runtime_dependencies_are_pinned(name, expected):
     )
     assert str(requirement.specifier) == f"=={expected}"
     assert version(name) == expected
+
+
+@pytest.mark.parametrize(
+    "name,expected",
+    [
+        ("cachetools", "7.2.3"),
+        ("distlib", "0.4.4"),
+        ("platformdirs", "4.13.3"),
+        ("pluggy", "1.7.0"),
+        ("pyproject-api", "1.11.7"),
+        ("python-discovery", "1.6.3"),
+        ("virtualenv", "21.14.9"),
+    ],
+)
+def test_tool_dependency_versions_are_pinned(name, expected):
+    requirement = next(
+        Requirement(item)
+        for item in distribution("pylaia").requires
+        if Requirement(item).name.lower() == name
+    )
+    assert str(requirement.specifier) == f"=={expected}"
+    assert requirement.marker.evaluate({"extra": "test"})
+    assert not requirement.marker.evaluate({"extra": ""})
+    assert version(name) == expected
+
+
+def test_cwevals_version_remains_pinned_to_the_wandb_requirement():
+    requirement = next(
+        Requirement(item)
+        for item in distribution("pylaia").requires
+        if Requirement(item).name.lower() == "cwevals"
+    )
+    assert str(requirement.specifier) == "==0.0.1b1"
+    assert requirement.marker.evaluate({"extra": "wandb"})
+    assert not requirement.marker.evaluate({"extra": ""})
