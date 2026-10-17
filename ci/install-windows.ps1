@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('3.13', '3.14', '3.15')][string]$PythonVersion = '3.15',
+    [ValidateSet('3.14', '3.15')][string]$PythonVersion = '3.15',
     [ValidateSet('CPU', 'CUDA')][string]$TorchBuild = 'CUDA',
     [string]$InstallationPath = '',
     [string]$OriginalTorchWheel = ''

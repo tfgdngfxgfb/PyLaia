@@ -1,21 +1,21 @@
-# PyLaia 1.2.4+fork.20261014
+# PyLaia 1.2.5+fork.20261017
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.4+fork.20261014`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.5+fork.20261017`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
 
 - Python **3.15.0**: single-device **CPU and NVIDIA GPU on Windows**, using the
   supplied corrected PyTorch bindings. The Windows installer defaults to 3.15/CUDA.
-- Python **3.14.8** and **3.13.16** retain CPU and NVIDIA GPU support.
+- Python **3.14.8** retains CPU and NVIDIA GPU support. Python 3.13 is no longer supported.
 - PyTorch **2.14.1**, TorchVision **0.29.1**, Lightning **2.6.6**.
-- NumPy **2.5.4**, with the same Python 3.13/3.14/3.15 support.
-- CUDA **13.2** on Python 3.15; CUDA **13.0** on 3.13/3.14, with a compatible driver
+- NumPy **2.5.4**, Pillow **13.0.0**, filelock **4.2.0**.
+- CUDA **13.2** on Python 3.15; CUDA **13.0** on 3.14, with a compatible driver
   and cuDNN enabled. Free-threaded Python is not supported.
 
 The official Windows Torch 2.14.1 CPU and CUDA wheels have a CPython 3.15 thread-state
@@ -26,7 +26,7 @@ The official computation libraries and CUDA/cuDNN DLLs are retained unchanged.
 Do not install the uncorrected official 3.15 wheels directly; PyLaia rejects them.
 
 Windows 3.15 distributed/Gloo execution remains unvalidated and blocked; use
-3.13/3.14 for distributed training. `torch.compile` on 3.15 is unsupported by the
+3.14 for distributed training. `torch.compile` on 3.15 is unsupported by the
 pinned Torch release. PyLaia's eager workflow does not require it. cuDNN and RNN
 dropout remain enabled and unchanged throughout execution.
 
@@ -34,6 +34,10 @@ Python dependencies are updated to the latest compatible stable versions at buil
 time. `mpmath` remains at 1.3.0 because current SymPy requires `<1.4`; forcing 1.4.1
 would break dependency constraints. Torch's vendored native components remain at
 the versions matched to its stable release, rather than being independently swapped.
+
+Pillow 13.0.0 addresses newly published security advisories affecting 12.3.0 and
+officially supports Python 3.15. Only process trusted input files. The optional
+W&B extra is 0.31.0; development tools use Ruff 0.17.1 and tox 4.66.0.
 
 Dependencies are pinned in [pyproject.toml](pyproject.toml). Do not install the unrelated
 upstream PyPI package with `pip install pylaia`; install this checkout or the supplied
@@ -68,7 +72,7 @@ Increase `--data.num_workers` when appropriate.
 
 ### Python 3.15 on Windows (CPU or NVIDIA GPU)
 
-The Windows bundle includes all three runtimes and the corrected binding binaries:
+The Windows bundle includes Python 3.14/3.15 runtimes and the corrected binding binaries:
 
 ```powershell
 .\Install-PyLaia.ps1 -PythonVersion 3.15 -TorchBuild CUDA
@@ -81,7 +85,7 @@ still require network access. No compiler or Rust is needed to install the bundl
 Flashlight, KenLM, python-bidi and PyYAML binaries are included.
 
 For a source checkout, see [the reproducible native-build instructions](ci/PYTORCH315_BUILD.md).
-Keep `devices=1` and `strategy=auto` on Windows 3.15. Python 3.13/3.14 source
+Keep `devices=1` and `strategy=auto` on Windows 3.15. Python 3.14 source
 installation uses the unchanged official Torch commands above.
 
 ## Tools and example
@@ -130,13 +134,13 @@ Weights & Biases is opt-in: `python -m pip install -e '.[wandb]'`, then
 `--train.log_to_wandb=true`. Ordinary training stores logs locally.
 
 Greedy CTC decoding and char/word segmentation need no TorchAudio.
-Language-model decoding uses Flashlight plus KenLM. On Python 3.13/3.14 it retains
+Language-model decoding uses Flashlight plus KenLM. On Python 3.14 it retains
 the optional TorchAudio 2.11 backend. Python 3.15 instead uses a small offline
 adapter derived from TorchAudio's BSD-licensed decoder; the original license is
 included as LICENSE-TORCHAUDIO. Beam defaults, trie construction, token reduction
 and scores match the existing backend in parity tests. Upstream Flashlight 0.0.7
 has no wheels for these Python versions. This fork builds patched Windows x64
-wheels for all three versions, verified with real n-gram decoding
+wheels for both supported versions, verified with real n-gram decoding
 and Unicode file paths. Build them before installing the language-model extra:
 
 ```powershell
@@ -187,17 +191,16 @@ model creation, CPU/CUDA training, checkpoint resume, a new symbol set during
 fine-tuning, decoding and export. CUDA tests skip when a GPU is unavailable.
 Some inherited tests depend on unavailable pretrained files and remain skipped;
 no external trained model is needed for the new workflow test.
-GitHub Actions checks Python 3.13/3.14/3.15 on Windows/Linux. There is no automatic
+GitHub Actions checks Python 3.14/3.15 on Windows/Linux. There is no automatic
 PyPI, public documentation, coverage upload, or Docker-registry publishing.
 Windows language-model builds/tests and dependency advisory checks are also included.
-The 2026-10-07 baseline exited successfully on 3.13/CPU and 3.14/CUDA. The 3.15
-extension adds native-adapter parity, input-validation, interpreter-range and
-known-crashing-runtime regression tests. Windows 3.15 tests run with the official
-CPU wheel. Two inherited DDP/Gloo helper tests are explicitly skipped on Windows
-3.15 because of a reproduced native crash; they remain enabled on 3.13/3.14 and
-Linux. GPU tests skip in CPU-only environments, and unavailable pretrained-file
-tests remain skipped. Current validation results are recorded in SECURITY.md;
-passing CPU tests does not imply Python 3.15 GPU or distributed support.
+Windows 3.15 tests use the corrected CPU bindings, including plain-Torch autograd
+and normal-shutdown checks. Two inherited DDP/Gloo helper tests are explicitly
+skipped on Windows 3.15 because of a reproduced native crash; they remain enabled
+on 3.14 and Linux. GPU tests skip in CPU-only CI; GPU validation is local. Tests
+also cover generated-image training/resume/decoding, Pillow raster/16-bit TIFF
+loading, and W&B logging in offline mode. Current and historical validation
+results are recorded in SECURITY.md. Python 3.15 distributed support is not implied.
 
 The Dockerfile uses Python 3.14 and CPU PyTorch by default. For NVIDIA,
 build with `--build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu130`

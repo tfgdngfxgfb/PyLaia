@@ -58,7 +58,6 @@ def test_missing_native_cleanup_is_not_called(monkeypatch):
 @pytest.mark.parametrize(
     "platform,python,cuda,blocked",
     [
-        ("win32", (3, 13), "13.0", False),
         ("win32", (3, 14), "13.0", False),
         ("win32", (3, 15), None, True),
         ("linux", (3, 15), "13.0", False),
@@ -144,7 +143,7 @@ def test_windows315_automatic_gpu_count_is_checked(monkeypatch, devices):
 
 def test_older_python_retains_distributed_settings(monkeypatch):
     monkeypatch.setattr(compatibility, "platform", "win32")
-    for python in ((3, 13), (3, 14)):
+    for python in ((3, 14),):
         monkeypatch.setattr(compatibility, "version_info", python)
         compatibility.ensure_supported_trainer("ddp_spawn", 2, 2)
 

@@ -27,7 +27,7 @@ def ensure_supported_runtime():
             "thread-state ABI in Python autograd callbacks (CPU and CUDA), including "
             "a native autograd-thread shutdown crash on CUDA. Install the corrected "
             "Python 3.15 PyTorch bindings supplied with this build, or use Python "
-            "3.13/3.14. cuDNN has not been disabled."
+            "3.14. cuDNN has not been disabled."
         )
 
 
@@ -56,7 +56,7 @@ def ensure_supported_trainer(strategy, devices, num_nodes, *, accelerator="auto"
         raise RuntimeError(
             "Windows Python 3.15 supports single-device CPU or CUDA execution only "
             "in this build. Distributed/Gloo execution is not validated. "
-            "Use devices=1 and strategy=auto, or Python 3.13/3.14."
+            "Use devices=1 and strategy=auto, or Python 3.14."
         )
 
 

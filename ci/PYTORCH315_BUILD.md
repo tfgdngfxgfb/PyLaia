@@ -55,5 +55,5 @@ requires Rust/Cargo. Full native build logs stay local: NVCC errors can dump pro
 environment variables, so do not upload those logs without reviewing/redacting them.
 
 Windows 3.15 distributed/multi-device training remains unvalidated and blocked.
-Use Python 3.13/3.14 for distributed work. Free-threaded Python and `torch.compile`
+Use Python 3.14 for distributed work. Free-threaded Python and `torch.compile`
 on 3.15 are not supported by this release. cuDNN and dropout stay enabled.

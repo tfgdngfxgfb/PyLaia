@@ -1,8 +1,10 @@
 [#installation]
 = Installation
 
-This private independent fork supports standard Python 3.13, 3.14 and 3.15.
-On Windows, 3.15 is single-device CPU only; use 3.13/3.14 for GPU or distributed work.
+This private independent fork supports standard Python 3.14 and 3.15.
+Python 3.13 is no longer supported starting with 1.2.5.
+On Windows, 3.15 supports CPU or one NVIDIA GPU using the bundled corrected
+PyTorch bindings. Use 3.14 for distributed work.
 Install this repository, not the upstream PyPI package.
 
 [#from-source]

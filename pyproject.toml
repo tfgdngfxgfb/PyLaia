@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylaia"
-version = "1.2.4+fork.20261014"
+version = "1.2.5+fork.20261017"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
@@ -16,14 +16,13 @@ maintainers = [
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3.15",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Image Recognition",
     "Topic :: Text Processing :: Linguistic",
 ]
-requires-python = ">=3.13,<3.16"
+requires-python = ">=3.14,<3.16"
 dependencies = [
     "setuptools==84.0.0",
     "imagesize==2.0.1",
@@ -40,7 +39,8 @@ dependencies = [
     "prettytable==3.18.0",
     "python-bidi==0.6.11",
     "numpy==2.5.4",
-    "pillow==12.3.0",
+    "pillow==13.0.0",
+    "filelock==4.2.0",
     "PyYAML==6.0.3",
     "packaging>=23",
     "tqdm>=4.66",
@@ -57,19 +57,19 @@ Tracker = "https://github.com/tfgdngfxgfb/PyLaia-fork/issues"
 [project.optional-dependencies]
 dev = [
     "pre-commit==4.7.0",
-    "ruff==0.17.0",
+    "ruff==0.17.1",
     "build>=1.2",
     "pip-audit==2.10.1",
 ]
 test = [
-    "tox==4.65.5",
+    "tox==4.66.0",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
     "pandas>=2.2",
     "regex>=2024.11.6",
     "tensorboard>=2.18",
 ]
-wandb = ["wandb==0.30.0"]
+wandb = ["wandb==0.31.0"]
 language-model = [
     "torchaudio==2.11.0; python_version < '3.15'",
     "flashlight-text==0.0.7",
@@ -106,7 +106,7 @@ precision = 2
 pythonpath = "."
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py314"
 
 [tool.ruff.lint]
 select = [

@@ -35,7 +35,7 @@ def main():
     wheel_name = f"pylaia-{version}-py3-none-any.whl"
     (destination / "wheels").mkdir()
     shutil.copy2(ROOT / "dist" / wheel_name, destination / "wheels" / wheel_name)
-    for tag in ("cp313", "cp314", "cp315"):
+    for tag in ("cp314", "cp315"):
         source = ROOT / "dist/language-model" / tag
         wheels = destination / "wheels" / tag
         wheels.mkdir()
@@ -53,7 +53,7 @@ def main():
                 shutil.copy2(source / filename, wheels / filename)
         shutil.copytree(source / "sources", destination / "sources" / tag)
     python_versions = {}
-    for version_tag in ("313", "314", "315"):
+    for version_tag in ("314", "315"):
         runtime = ROOT / ".runtime" / f"python{version_tag}"
         python_versions[f"3.{version_tag[1:]}"] = (
             subprocess.check_output(
@@ -105,7 +105,6 @@ def main():
         ).strip(),
         "python": python_versions,
         "windows_support": {
-            "3.13": ["CPU", "CUDA"],
             "3.14": ["CPU", "CUDA"],
             "3.15": ["CPU", "CUDA"],
         },

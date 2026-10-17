@@ -42,7 +42,7 @@ try:
     )
     node = node.decode().strip()
     __version__ += f"-{branch}-{node}"
-except (subprocess.CalledProcessError, OSError):
+except subprocess.CalledProcessError, OSError:
     pass
 
 

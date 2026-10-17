@@ -1,6 +1,18 @@
 [#releases]
 = Releases
 
+== 1.2.5 — Pillow security update and Python 3.14/3.15 maintenance
+
+* Update Pillow 12.3.0 to 13.0.0, including newly published security fixes and
+  official Python 3.15 support. Pin filelock 4.2.0, W&B 0.31.0, Ruff 0.17.1
+  and tox 4.66.0.
+* Remove Python 3.13 from package metadata, CI, installer choices and Windows
+  bundles. Preserve Python 3.14 and single-device Windows 3.15 CPU/CUDA.
+* Add raster/16-bit TIFF and offline W&B logger regressions; include optional
+  W&B in full CI tests and exercise native decoder parity in language-model CI.
+* Keep original package/import/command names and the corrected Torch 2.14.1
+  bindings. cuDNN, dropout and official computation libraries are unchanged.
+
 == 1.2.4 — Windows Python 3.15 rebuild maintenance
 
 * Explicitly select and verify the native Ninja executable for nested CMake

@@ -1,6 +1,6 @@
-# Security notes — PyLaia 1.2.4+fork.20261014
+# Security notes — PyLaia 1.2.5+fork.20261017
 
-Review dates: 2026-10-07 and 2026-10-14. Scope: this fork, dependency advisories, Windows packaging,
+Review dates: 2026-10-07, 2026-10-14 and 2026-10-17. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
 This is a targeted engineering review, not a formal penetration test or guarantee.
 
@@ -38,6 +38,20 @@ This is a targeted engineering review, not a formal penetration test or guarante
   unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Pillow and supported-runtime maintenance (2026-10-17)
+
+- Upgrade Pillow to 13.0.0. The newly published
+  [critical multi-frame image advisory](https://github.com/python-pillow/Pillow/security/advisories/GHSA-v9pv-5gc8-w2m6)
+  includes 12.3.0 in its affected range and identifies 13.0.0 as patched.
+  Historical clean advisory results below describe the knowledge available at
+  their review date, not a guarantee that the older build remains vulnerability-free.
+- Pin filelock 4.2.0, optional W&B 0.31.0, Ruff 0.17.1 and tox 4.66.0.
+  W&B remains opt-in and its regression uses offline mode without uploading data.
+- Python 3.13 is no longer a supported or bundled runtime. Python 3.14/3.15
+  remain in CI. Existing 1.2.4 and older release archives are preserved.
+- PyTorch 2.14.1 corrected bindings, official computation/CUDA/cuDNN libraries
+  and the shutdown fix are unchanged; cuDNN and dropout remain enabled.
 
 ### Windows CI build maintenance (2026-10-14)
 
@@ -223,7 +237,7 @@ Restricted loading is not a sandbox; huge/malformed tensors, images, ARPA models
 or archives can still exhaust resources or reach bugs in native libraries.
 Only process trusted data and models. Keep the operating system and NVIDIA driver
 updated. The default Python 3.15 CUDA installation requires a driver supporting
-CUDA 13.2; Python 3.13/3.14 CUDA installations require CUDA 13.0 driver support.
+CUDA 13.2; Python 3.14 CUDA installations require CUDA 13.0 driver support.
 
 WandB/network logging is opt-in. Ordinary training stays local, but installing
 available dependencies contacts official PyTorch/PyPI services. The Windows build
