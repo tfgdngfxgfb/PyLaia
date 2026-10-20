@@ -132,6 +132,28 @@ def test_rejects_payload_modified_after_record_was_written(tmp_path):
         patch(original, tmp_path)
 
 
+def test_preserves_linux_directory_entries_without_treating_them_as_files(tmp_path):
+    original = tmp_path / "sample-1.0-py3-none-any.whl"
+    write_original(original, wheel_contents())
+    with zipfile.ZipFile(original, "a") as archive:
+        archive.writestr("sample/", b"")
+        archive.writestr("sample-1.0.dist-info/", b"")
+    result = patch(original, tmp_path)
+    with zipfile.ZipFile(tmp_path / result["wheel"]) as archive:
+        assert archive.getinfo("sample/").is_dir()
+        assert archive.getinfo("sample-1.0+pylaia1.dist-info/").is_dir()
+        rows = list(
+            csv.reader(
+                io.StringIO(
+                    archive.read("sample-1.0+pylaia1.dist-info/RECORD").decode()
+                )
+            )
+        )
+        assert {row[0] for row in rows} == {
+            name for name in archive.namelist() if not name.endswith("/")
+        }
+
+
 def test_rejects_changed_upstream_dependency_and_preserves_existing_target(tmp_path):
     original = tmp_path / "sample-1.0-py3-none-any.whl"
     contents = wheel_contents()

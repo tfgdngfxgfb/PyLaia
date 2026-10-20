@@ -98,7 +98,8 @@ def patch_wheel(
     if (
         any(len(row) != 3 for row in records)
         or len({row[0] for row in records}) != len(records)
-        or {row[0] for row in records} != set(files)
+        or {row[0] for row in records}
+        != {path for path in files if not path.endswith("/")}
     ):
         raise RuntimeError("Incomplete or duplicate upstream RECORD")
     for path, digest, size in records:
@@ -140,6 +141,8 @@ def patch_wheel(
     records = io.StringIO(newline="")
     writer = csv.writer(records, lineterminator="\n")
     for path, data in sorted(output.items()):
+        if path.endswith("/"):
+            continue
         writer.writerow(
             (
                 path,
