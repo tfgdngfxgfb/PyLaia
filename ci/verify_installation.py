@@ -63,6 +63,16 @@ def main():
     parser.add_argument("--check-wandb", action="store_true")
     args = parser.parse_args()
     import sympy as sp
+    from bidi import get_display
+
+    for package, expected in {
+        "filelock": "4.2.4",
+        "python-bidi": "0.6.12",
+        "setuptools": "84.2.0",
+        "pip": "26.2.2",
+    }.items():
+        assert version(package) == expected, (package, version(package), expected)
+    assert get_display("abc שלום") == "abc םולש"
 
     assert sp.__version__ == version("sympy") == "1.14.0+pylaia1"
     assert version("mpmath") == "1.4.1"

@@ -78,7 +78,9 @@ def test_python313_is_not_advertised_or_bundled():
     "name,expected",
     [
         ("pillow", "13.0.0"),
-        ("filelock", "4.2.1"),
+        ("filelock", "4.2.4"),
+        ("python-bidi", "0.6.12"),
+        ("setuptools", "84.2.0"),
         ("mpmath", "1.4.1"),
         ("sympy", "1.14.0+pylaia1"),
     ],
@@ -96,13 +98,19 @@ def test_runtime_dependency_versions_are_pinned(name, expected):
 @pytest.mark.parametrize(
     "name,expected",
     [
-        ("cachetools", "7.2.3"),
+        ("cachetools", "7.2.4"),
         ("distlib", "0.4.4"),
-        ("platformdirs", "4.13.3"),
+        ("platformdirs", "4.13.5"),
         ("pluggy", "1.7.0"),
-        ("pyproject-api", "1.11.7"),
-        ("python-discovery", "1.6.3"),
-        ("virtualenv", "21.14.9"),
+        ("pyproject-api", "1.12.0"),
+        ("python-discovery", "1.6.4"),
+        ("virtualenv", "21.14.11"),
+        ("tox", "4.67.1"),
+        ("pip", "26.2.2"),
+        ("markdown", "3.11.2"),
+        ("certifi", "2026.10.19"),
+        ("xxhash", "4.0.2"),
+        ("wcwidth", "0.9.3"),
     ],
 )
 def test_tool_dependency_versions_are_pinned(name, expected):

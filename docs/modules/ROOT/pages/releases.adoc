@@ -1,6 +1,15 @@
 [#releases]
 = Releases
 
+== 1.2.8 — Runtime and test-tool maintenance
+
+* Upgrade filelock 4.2.4, python-bidi 0.6.12, setuptools 84.2.0 and pip 26.2.2.
+* Upgrade cachetools 7.2.4, platformdirs 4.13.5, pyproject-api 1.12.0,
+  python-discovery 1.6.4, tox 4.67.1, virtualenv 21.14.11 and Markdown 3.11.2.
+* Update older test environments to certifi 2026.10.19, xxhash 4.0.2 and wcwidth 0.9.3.
+* Keep Python 3.14/3.15, CPU/GPU support, local SymPy/W&B compatibility pairs,
+  original package/import/command names and enabled cuDNN/dropout unchanged.
+
 == 1.2.7 — Local SymPy and W&B compatibility pairs
 
 * Supply SymPy 1.14.0+pylaia1 with mpmath 1.4.1 and optional W&B 0.31.0+pylaia1

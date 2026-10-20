@@ -1,11 +1,11 @@
-# PyLaia 1.2.7+fork.20261020
+# PyLaia 1.2.8+fork.20261020
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.7+fork.20261020`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.8+fork.20261020`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
@@ -14,7 +14,7 @@ independent build; check it with `pylaia-htr-create-model --version`.
   supplied corrected PyTorch bindings. The Windows installer defaults to 3.15/CUDA.
 - Python **3.14.8** retains CPU and NVIDIA GPU support. Python 3.13 is no longer supported.
 - PyTorch **2.14.1**, TorchVision **0.29.1**, Lightning **2.6.6**.
-- NumPy **2.5.4**, Pillow **13.0.0**, filelock **4.2.1**.
+- NumPy **2.5.4**, Pillow **13.0.0**, filelock **4.2.4**, python-bidi **0.6.12**.
 - CUDA **13.2** on Python 3.15; CUDA **13.0** on 3.14, with a compatible driver
   and cuDNN enabled. Free-threaded Python is not supported.
 
@@ -40,9 +40,11 @@ the versions matched to its stable release, rather than being independently swap
 
 Pillow 13.0.0 addresses newly published security advisories affecting 12.3.0 and
 officially supports Python 3.15. Only process trusted input files. The optional
-W&B extra is 0.31.0+pylaia1; development tools use Ruff 0.17.1 and tox 4.66.0.
-The test extra pins cachetools 7.2.3, distlib 0.4.4, platformdirs 4.13.3,
-pluggy 1.7.0, pyproject-api 1.11.7, python-discovery 1.6.3 and virtualenv 21.14.9.
+W&B extra is 0.31.0+pylaia1; development tools use Ruff 0.17.1 and tox 4.67.1.
+Setuptools/build metadata uses 84.2.0; the Windows installer uses pip 26.2.2.
+The test extra pins cachetools 7.2.4, distlib 0.4.4, platformdirs 4.13.5,
+pluggy 1.7.0, pyproject-api 1.12.0, python-discovery 1.6.4 and virtualenv 21.14.11,
+plus Markdown 3.11.2, certifi 2026.10.19, xxhash 4.0.2 and wcwidth 0.9.3.
 The new cwevals release is still a beta. Neither its cloud endpoints nor arbitrary
 future mpmath/cwevals versions are covered by this fork's offline checks.
 
@@ -165,7 +167,7 @@ KenLM HEAD. Patched versions are `flashlight-text==0.0.7+pylaia1` and
 `kenlm==0.3.0+pylaia1`. The Windows bundle includes those wheels, corresponding
 patched sources/licenses, isolated Python runtimes and an installer; other available
 dependencies download from official PyTorch/PyPI sources during installation.
-Python 3.15 also includes locally built python-bidi 0.6.11 and PyYAML 6.0.3 wheels
+Python 3.15 also includes python-bidi 0.6.12 and locally built PyYAML 6.0.3 wheels
 with hash-verified original source archives and licenses. Those packages are
 installed locally before resolving the rest of PyLaia's dependencies.
 This bundle is not fully offline. Linux language-model source builds are not verified.

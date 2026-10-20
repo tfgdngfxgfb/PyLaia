@@ -1,4 +1,4 @@
-# Security notes — PyLaia 1.2.7+fork.20261020
+# Security notes — PyLaia 1.2.8+fork.20261020
 
 Review dates: 2026-10-07, 2026-10-14, 2026-10-17 and 2026-10-20. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
@@ -18,7 +18,7 @@ This is a targeted engineering review, not a formal penetration test or guarante
 - Removed the inherited test-suite TLS-certificate bypass.
 - Fresh-install CI caught an older `setuptools` from the PyTorch wheel index
   (PYSEC-2025-49 / PYSEC-2026-3447). Only Torch/TorchVision are fetched from that
-  index; other dependencies resolve from PyPI. Setuptools is pinned to 84.0.0,
+  index; other dependencies resolve from PyPI. Setuptools is pinned to 84.2.0,
   and builds require at least 83, preventing that vulnerable version from remaining.
 - GitHub CI has read-only repository permissions and actions pinned to verified
   commit IDs. The old GitLab/public publishing pipeline was removed; it remains
@@ -38,6 +38,18 @@ This is a targeted engineering review, not a formal penetration test or guarante
   unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Runtime and test-tool maintenance (2026-10-20, 1.2.8)
+
+- Upgrade filelock 4.2.4, python-bidi 0.6.12, setuptools 84.2.0 and pip 26.2.2.
+- Upgrade cachetools 7.2.4, platformdirs 4.13.5, pyproject-api 1.12.0,
+  python-discovery 1.6.4, tox 4.67.1, virtualenv 21.14.11 and Markdown 3.11.2.
+- Synchronize older test environments with certifi 2026.10.19, xxhash 4.0.2
+  and wcwidth 0.9.3, already used by the previous clean runtime installs.
+- Retain exact local SymPy/mpmath and W&B/cwevals pairs, supported Python
+  3.14/3.15, original package/command identity and enabled cuDNN/dropout.
+- Native build recipes use the updated installer/build tools too. Existing
+  tested native computation libraries are not independently replaced.
 
 ### Local SymPy/W&B compatibility pairs (2026-10-20)
 

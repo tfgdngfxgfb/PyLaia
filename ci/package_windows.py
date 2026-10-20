@@ -49,11 +49,15 @@ def main():
             shutil.copy2(source / filename, wheels / filename)
         if tag == "cp315":
             for filename in (
-                "python_bidi-0.6.11-cp315-cp315-win_amd64.whl",
+                "python_bidi-0.6.12-cp315-cp315-win_amd64.whl",
                 "pyyaml-6.0.3-cp315-cp315-win_amd64.whl",
             ):
                 shutil.copy2(source / filename, wheels / filename)
-        shutil.copytree(source / "sources", destination / "sources" / tag)
+        shutil.copytree(
+            source / "sources",
+            destination / "sources" / tag,
+            ignore=shutil.ignore_patterns("python_bidi-0.6.11.tar.gz"),
+        )
     python_versions = {}
     for version_tag in ("314", "315"):
         runtime = ROOT / ".runtime" / f"python{version_tag}"

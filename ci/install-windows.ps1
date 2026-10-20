@@ -29,7 +29,7 @@ Write-Host ('Creating an isolated PyLaia environment with Python ' + $PythonVers
 & $taskRuntime -m venv $InstallationPath
 if ($LASTEXITCODE -ne 0) { throw 'Could not create the Python environment.' }
 $taskPython = Join-Path $InstallationPath 'Scripts\python.exe'
-& $taskPython -m pip install --upgrade 'pip==26.2.1'
+& $taskPython -m pip install --upgrade 'pip==26.2.2'
 if ($LASTEXITCODE -ne 0) { throw 'Isolated installer update failed.' }
 $taskTorchIndex = 'https://download.pytorch.org/whl/cpu'
 if ($TorchBuild -eq 'CUDA') { $taskTorchIndex = 'https://download.pytorch.org/whl/cu130' }
@@ -70,7 +70,7 @@ $taskPylaia = Join-Path $PSScriptRoot ('wheels\' + $taskManifest.pylaia_wheel)
 & $taskPython -m pip install --no-deps $taskKenlm $taskFlashlight
 if ($LASTEXITCODE -ne 0) { throw 'Local native package installation failed.' }
 if ($PythonVersion -eq '3.15') {
-    $taskBidi = Join-Path $taskWheelFolder 'python_bidi-0.6.11-cp315-cp315-win_amd64.whl'
+    $taskBidi = Join-Path $taskWheelFolder 'python_bidi-0.6.12-cp315-cp315-win_amd64.whl'
     $taskYaml = Join-Path $taskWheelFolder 'pyyaml-6.0.3-cp315-cp315-win_amd64.whl'
     & $taskPython -m pip install --no-deps $taskBidi $taskYaml
     if ($LASTEXITCODE -ne 0) { throw 'Local Python 3.15 text/configuration package installation failed.' }

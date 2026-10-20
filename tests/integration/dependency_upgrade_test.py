@@ -127,6 +127,55 @@ def test_tox_discovers_both_supported_environments(tmp_path):
     ]
 
 
+def test_bidi_native_and_python_implementations_preserve_mixed_direction_text():
+    from bidi import get_display as native_display
+    from bidi.algorithm import get_display as python_display
+
+    assert version("python-bidi") == "0.6.12"
+    for text, expected in (("שלום", "םולש"), ("abc שלום", "abc םולש")):
+        assert native_display(text) == python_display(text) == expected
+
+
+def test_updated_markdown_renders_tables_and_unicode():
+    import markdown
+
+    result = markdown.markdown("| Navn |\n| --- |\n| **æøå** |", extensions=["tables"])
+    assert "<table>" in result and "<strong>æøå</strong>" in result
+
+
+def test_updated_certifi_bundle_loads_as_verified_tls_roots():
+    import ssl
+
+    import certifi
+
+    context = ssl.create_default_context(cafile=certifi.where())
+    assert context.check_hostname
+    assert context.verify_mode == ssl.CERT_REQUIRED
+    assert context.cert_store_stats()["x509_ca"] > 50
+
+
+def test_updated_xxhash_preserves_streamed_file_checksums(tmp_path):
+    import xxhash
+
+    path = tmp_path / "kontrollsum-æøå.bin"
+    data = bytes(range(256)) * 4096
+    path.write_bytes(data)
+    streamed = xxhash.xxh64()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(8192), b""):
+            streamed.update(chunk)
+    assert streamed.digest() == xxhash.xxh64(data).digest()
+    assert xxhash.xxh64(b"abc").hexdigest() == "44bc2cf5ad770999"
+
+
+def test_updated_wcwidth_handles_combining_and_wide_characters():
+    from wcwidth import wcswidth
+
+    assert wcswidth("æøå") == 3
+    assert wcswidth("a\u030a") == 1
+    assert wcswidth("漢字") == 4
+
+
 @pytest.mark.parametrize("format", ["PNG", "JPEG", "TIFF", "BMP"])
 @pytest.mark.parametrize("mode", ["L", "RGB"])
 def test_pillow_raster_loading_and_transforms(tmp_path, format, mode):

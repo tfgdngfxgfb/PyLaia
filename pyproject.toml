@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=83"]
+requires = ["setuptools==84.2.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylaia"
-version = "1.2.7+fork.20261020"
+version = "1.2.8+fork.20261020"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
@@ -24,7 +24,7 @@ classifiers = [
 ]
 requires-python = ">=3.14,<3.16"
 dependencies = [
-    "setuptools==84.0.0",
+    "setuptools==84.2.0",
     "imagesize==2.0.1",
     "jsonargparse[signatures]==4.52.0",
     "matplotlib==3.11.2",
@@ -37,10 +37,10 @@ dependencies = [
     "torchvision==0.29.1",
     "mdutils==1.8.1",
     "prettytable==3.18.0",
-    "python-bidi==0.6.11",
+    "python-bidi==0.6.12",
     "numpy==2.5.4",
     "pillow==13.0.0",
-    "filelock==4.2.1",
+    "filelock==4.2.4",
     "mpmath==1.4.1",
     "sympy==1.14.0+pylaia1",
     "PyYAML==6.0.3",
@@ -64,7 +64,7 @@ dev = [
     "pip-audit==2.10.1",
 ]
 test = [
-    "tox==4.66.0",
+    "tox==4.67.1",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
     "pandas>=2.2",
@@ -72,13 +72,18 @@ test = [
     "tensorboard>=2.18",
     "hypothesis>=6.70,<7",
     # Keep the tested transitive toolchain reproducible in local tests and CI.
-    "cachetools==7.2.3",
+    "cachetools==7.2.4",
     "distlib==0.4.4",
-    "platformdirs==4.13.3",
+    "platformdirs==4.13.5",
     "pluggy==1.7.0",
-    "pyproject-api==1.11.7",
-    "python-discovery==1.6.3",
-    "virtualenv==21.14.9",
+    "pyproject-api==1.12.0",
+    "python-discovery==1.6.4",
+    "virtualenv==21.14.11",
+    "pip==26.2.2",
+    "Markdown==3.11.2",
+    "certifi==2026.10.19",
+    "xxhash==4.0.2",
+    "wcwidth==0.9.3",
 ]
 wandb = ["wandb==0.31.0+pylaia1", "cwevals==0.0.1b2"]
 language-model = [

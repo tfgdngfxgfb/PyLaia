@@ -25,9 +25,9 @@ SOURCES = {
         "https://files.pythonhosted.org/packages/3a/b8/83f5a6a5aae7acc9289acd0c1e9ef954ccb881a912019f7bbb35f7d3a4cb/flashlight-text-0.0.7.tar.gz",
         "fb63779b4b642c0c59e66386f43db8357836ed1be82b49d30155f7c39136d836",
     ),
-    "python_bidi-0.6.11": (
-        "https://files.pythonhosted.org/packages/ce/e7/f168f2c3151aa05b9f9c9b2f7767bc8e06a133ea822c231ab497d4f36833/python_bidi-0.6.11.tar.gz",
-        "034090c597af250d699299d7e7f1e83eb016f9e47b3b707bd89ab2bdec77bce0",
+    "python_bidi-0.6.12": (
+        "https://files.pythonhosted.org/packages/3d/9d/b7ede7e25102f9e52c6cd5ffcd660eea659c2584001df84a352c76f62d74/python_bidi-0.6.12.tar.gz",
+        "bef41af9bfd16fc6cfc31d8b72a87023b52b5ebd468d9ff2f331a6843b2dad82",
     ),
     "pyyaml-6.0.3": (
         "https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz",
@@ -35,8 +35,8 @@ SOURCES = {
     ),
 }
 BUILD_TOOLS = [
-    "pip==26.2.1",
-    "setuptools==84.0.0",
+    "pip==26.2.2",
+    "setuptools==84.2.0",
     "wheel==0.48.0",
     "packaging==26.3",
     "cmake==4.4.4",
@@ -56,7 +56,7 @@ def replace_source(path, old, new):
 
 def prepare_sources(directory):
     for name, (url, expected_hash) in SOURCES.items():
-        if name in ("python_bidi-0.6.11", "pyyaml-6.0.3") and sys.version_info[:2] < (
+        if name in ("python_bidi-0.6.12", "pyyaml-6.0.3") and sys.version_info[:2] < (
             3,
             15,
         ):
@@ -215,7 +215,7 @@ def main():
         source_output = output / "sources"
         source_output.mkdir(exist_ok=True)
         if sys.version_info[:2] >= (3, 15):
-            for source_name in ("python_bidi-0.6.11", "pyyaml-6.0.3"):
+            for source_name in ("python_bidi-0.6.12", "pyyaml-6.0.3"):
                 shutil.copy2(directory / f"{source_name}.tar.gz", source_output)
         for name, path in (
             ("kenlm-0.3.0+pylaia1", kenlm),
@@ -227,7 +227,7 @@ def main():
             print(f"Patched source archives saved in {source_output}")
             return
         if sys.version_info[:2] >= (3, 15):
-            for source_name in ("python_bidi-0.6.11", "pyyaml-6.0.3"):
+            for source_name in ("python_bidi-0.6.12", "pyyaml-6.0.3"):
                 run(
                     "-m",
                     "pip",
@@ -281,7 +281,7 @@ def main():
                 str(flashlight_wheel),
                 *(
                     [
-                        str(output / f"python_bidi-0.6.11-{tag}-{tag}-win_amd64.whl"),
+                        str(output / f"python_bidi-0.6.12-{tag}-{tag}-win_amd64.whl"),
                         str(output / f"pyyaml-6.0.3-{tag}-{tag}-win_amd64.whl"),
                     ]
                     if sys.version_info[:2] >= (3, 15)
@@ -295,7 +295,7 @@ def main():
     if sys.version_info[:2] >= (3, 15):
         built_wheels.extend(
             [
-                output / f"python_bidi-0.6.11-{tag}-{tag}-win_amd64.whl",
+                output / f"python_bidi-0.6.12-{tag}-{tag}-win_amd64.whl",
                 output / f"pyyaml-6.0.3-{tag}-{tag}-win_amd64.whl",
             ]
         )
