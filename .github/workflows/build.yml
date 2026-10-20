@@ -48,10 +48,13 @@ jobs:
           python -I ci/verify_torch_runtime.py --device cpu
       - name: Install PyLaia and CPU TorchVision
         run: |
+          python ci/build_compatibility.py --install
           python -m pip install --no-deps torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
           python -m pip install '.[test,wandb]'
       - name: Test
         run: python -m pytest --cov=laia --cov-report=term-missing tests
+      - name: Test upstream SymPy numerical compatibility
+        run: python -m pytest --pyargs sympy.core.tests.test_evalf sympy.utilities.tests.test_lambdify -q
       - name: Build distributable packages
         run: |
           python -m pip install build
@@ -92,9 +95,13 @@ jobs:
       - name: Install official CPU PyTorch
         run: python -m pip install --no-deps torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
       - name: Install PyLaia and test tools
-        run: python -m pip install '.[test,wandb]'
+        run: |
+          python ci/build_compatibility.py --install
+          python -m pip install '.[test,wandb]'
       - name: Test
         run: python -m pytest --cov=laia --cov-report=term-missing tests
+      - name: Test upstream SymPy numerical compatibility
+        run: python -m pytest --pyargs sympy.core.tests.test_evalf sympy.utilities.tests.test_lambdify -q
       - name: Build distributable packages
         run: |
           python -m pip install build
@@ -138,6 +145,7 @@ jobs:
           python -m pip install --no-deps torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
       - name: Install PyLaia
         run: |
+          python ci/build_compatibility.py --install
           python -m pip install '.[test]'
       - name: Build and install patched Flashlight and KenLM
         shell: pwsh

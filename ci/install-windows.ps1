@@ -2,7 +2,8 @@ param(
     [ValidateSet('3.14', '3.15')][string]$PythonVersion = '3.15',
     [ValidateSet('CPU', 'CUDA')][string]$TorchBuild = 'CUDA',
     [string]$InstallationPath = '',
-    [string]$OriginalTorchWheel = ''
+    [string]$OriginalTorchWheel = '',
+    [switch]$WithWandb
 )
 
 $ErrorActionPreference = 'Stop'
@@ -53,6 +54,15 @@ if ($PythonVersion -eq '3.15') {
 }
 if ($LASTEXITCODE -ne 0) { throw 'PyTorch installation failed.' }
 Write-Host 'Installing local Flashlight/KenLM and PyLaia'
+$taskCompatibility = Join-Path $PSScriptRoot 'compatibility'
+$taskSympy = Join-Path $taskCompatibility 'sympy-1.14.0+pylaia1-py3-none-any.whl'
+$taskMpmath = Join-Path $taskCompatibility 'mpmath-1.4.1-py3-none-any.whl'
+& $taskPython -m pip install $taskSympy $taskMpmath
+if ($LASTEXITCODE -ne 0) { throw 'Local SymPy/mpmath installation failed.' }
+if ($WithWandb) {
+    & $taskPython -m pip install (Join-Path $taskCompatibility 'wandb-0.31.0+pylaia1-py3-none-win_amd64.whl') (Join-Path $taskCompatibility 'cwevals-0.0.1b2-py3-none-any.whl')
+    if ($LASTEXITCODE -ne 0) { throw 'Local W&B/cwevals installation failed.' }
+}
 $taskWheelFolder = Join-Path $PSScriptRoot ('wheels\' + $taskTag)
 $taskKenlm = Join-Path $taskWheelFolder ('kenlm-0.3.0+pylaia1-' + $taskTag + '-' + $taskTag + '-win_amd64.whl')
 $taskFlashlight = Join-Path $taskWheelFolder ('flashlight_text-0.0.7+pylaia1-' + $taskTag + '-' + $taskTag + '-win_amd64.whl')
@@ -72,6 +82,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Dependency verification failed.' }
 $taskSmoke = Join-Path $PSScriptRoot 'verify-installation.py'
 $taskSmokeArgs = @('-I', $taskSmoke)
 if ($TorchBuild -eq 'CUDA') { $taskSmokeArgs += '--require-cuda' }
+if ($WithWandb) { $taskSmokeArgs += '--check-wandb' }
 & $taskPython @taskSmokeArgs
 if ($LASTEXITCODE -ne 0) { throw 'Installation test failed.' }
 Write-Host ('Installation verified. Commands are in: ' + (Join-Path $InstallationPath 'Scripts'))

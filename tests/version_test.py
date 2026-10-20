@@ -76,7 +76,12 @@ def test_python313_is_not_advertised_or_bundled():
 
 @pytest.mark.parametrize(
     "name,expected",
-    [("pillow", "13.0.0"), ("filelock", "4.2.1"), ("mpmath", "1.3.0")],
+    [
+        ("pillow", "13.0.0"),
+        ("filelock", "4.2.1"),
+        ("mpmath", "1.4.1"),
+        ("sympy", "1.14.0+pylaia1"),
+    ],
 )
 def test_runtime_dependency_versions_are_pinned(name, expected):
     requirement = next(
@@ -112,12 +117,12 @@ def test_tool_dependency_versions_are_pinned(name, expected):
     assert version(name) == expected
 
 
-def test_cwevals_version_remains_pinned_to_the_wandb_requirement():
+def test_cwevals_version_matches_the_local_wandb_requirement():
     requirement = next(
         Requirement(item)
         for item in distribution("pylaia").requires
         if Requirement(item).name.lower() == "cwevals"
     )
-    assert str(requirement.specifier) == "==0.0.1b1"
+    assert str(requirement.specifier) == "==0.0.1b2"
     assert requirement.marker.evaluate({"extra": "wandb"})
     assert not requirement.marker.evaluate({"extra": ""})

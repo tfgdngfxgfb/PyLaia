@@ -1,5 +1,5 @@
-PyLaia 1.2.6+fork.20261017 — privat Windows-bygg
-Versjon 1.2.6+fork.20261017. Dette er ikke den offisielle PyLaia-utgaven.
+PyLaia 1.2.7+fork.20261020 — privat Windows-bygg
+Versjon 1.2.7+fork.20261020. Dette er ikke den offisielle PyLaia-utgaven.
 
 En målrettet Windows-retting rydder PyTorchs cuDNN-dropout-cache ved avslutning,
 før GPU-bibliotekene lukkes. Den unngår et gjenskapt avslutningskrasj.
@@ -11,10 +11,11 @@ Innhold:
 - Opprinnelig pakkenavn pylaia, import laia og pylaia-htr-* kommandoer.
 - Versjonsnummeret skiller bygget fra offisiell PyLaia.
 - Pillow 13.0.0 med nye sikkerhetsrettinger, filelock 4.2.1 og NumPy 2.5.4.
-- Valgfri W&B-logging bruker 0.31.0. Utviklingstester bruker Ruff 0.17.1 og tox 4.66.0.
+- Valgfri W&B-logging bruker 0.31.0+pylaia1. Utviklingstester bruker Ruff 0.17.1 og tox 4.66.0.
 - Testverktøy: cachetools 7.2.3, distlib 0.4.4, platformdirs 4.13.3, pluggy 1.7.0,
   pyproject-api 1.11.7, python-discovery 1.6.3 og virtualenv 21.14.9.
-- mpmath 1.3.0 og valgfri cwevals 0.0.1b1 beholdes uendret og er låst eksplisitt.
+- Lokal SymPy 1.14.0+pylaia1 med mpmath 1.4.1 er inkludert.
+- Lokal W&B 0.31.0+pylaia1 med cwevals 0.0.1b2 er inkludert, men er valgfri.
 - Python 3.15.0 og 3.14.8, kun brukt i et isolert miljø. Python 3.13 er ikke støttet.
 - Python 3.15 støttes med CPU og én NVIDIA-GPU; 3.14 beholdes også.
 - Ferdige, korrigerte PyTorch 2.14.1-bindinger for 3.15 CPU/CUDA 13.2.
@@ -32,6 +33,7 @@ Installasjon:
    .\Install-PyLaia.ps1 -TorchBuild CPU
 
 Standard er Python 3.15. For 3.14, legg til -PythonVersion 3.14.
+For valgfri W&B-logging, legg til -WithWandb. De lokale hjulene ligger i compatibility/.
 For Python 3.15 med CPU:
    .\Install-PyLaia.ps1 -PythonVersion 3.15 -TorchBuild CPU
 Uten -TorchBuild velger installasjonsprogrammet CUDA.
@@ -80,4 +82,6 @@ bruk av de ferdigbygde pakkene. Ny bygging av python-bidi for 3.15 krever også
 Rust/Cargo. Kontrollsummene er en integritetskontroll;
 ZIP-filen er ikke kode-signert. Sammenlign også den separate ZIP-kontrollsummen.
 Oppskrift for PyTorch-bindingene følger i build-tools/PYTORCH315_BUILD.md.
-mpmath beholdes på 1.3.0 fordi nyeste SymPy krever en versjon under 1.4.
+De lokale SymPy/W&B-variantene er versjonsmerket og har eksakte nye avhengighetskrav.
+Numerisk kode og W&Bs native backend er uendret; kildearkiver, lisenser og oppskrift
+følger med. cwevals er fortsatt beta. Sky-/kontoendepunkter er ikke testet live.

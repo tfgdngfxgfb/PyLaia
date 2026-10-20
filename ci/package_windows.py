@@ -35,6 +35,8 @@ def main():
     wheel_name = f"pylaia-{version}-py3-none-any.whl"
     (destination / "wheels").mkdir()
     shutil.copy2(ROOT / "dist" / wheel_name, destination / "wheels" / wheel_name)
+    compatibility = ROOT / "dist/python-compatibility"
+    shutil.copytree(compatibility, destination / "compatibility")
     for tag in ("cp314", "cp315"):
         source = ROOT / "dist/language-model" / tag
         wheels = destination / "wheels" / tag
@@ -71,6 +73,8 @@ def main():
         ("ci/install-windows.ps1", "Install-PyLaia.ps1"),
         ("ci/verify_installation.py", "verify-installation.py"),
         ("ci/verify_torch_runtime.py", "verify_torch_runtime.py"),
+        ("ci/build_compatibility.py", "build-tools/build_compatibility.py"),
+        ("ci/COMPATIBILITY.md", "build-tools/COMPATIBILITY.md"),
         ("ci/assemble_torch315_wheel.py", "build-tools/assemble_torch315_wheel.py"),
         ("ci/build_torch315.py", "build-tools/build_torch315.py"),
         ("ci/build-torch315.ps1", "build-tools/build-torch315.ps1"),

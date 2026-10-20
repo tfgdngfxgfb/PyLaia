@@ -60,7 +60,31 @@ ngram 2=14
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--require-cuda", action="store_true")
+    parser.add_argument("--check-wandb", action="store_true")
     args = parser.parse_args()
+    import sympy as sp
+
+    assert sp.__version__ == version("sympy") == "1.14.0+pylaia1"
+    assert version("mpmath") == "1.4.1"
+    assert str(sp.N(sp.pi, 50)).startswith("3.1415926535897932384626433832795")
+    x = sp.Symbol("x")
+    assert sp.integrate(sp.exp(-x), (x, 0, sp.oo)) == 1
+    if args.check_wandb:
+        import wandb
+
+        assert wandb.__version__ == version("wandb") == "0.31.0+pylaia1"
+        assert version("cwevals") == "0.0.1b2"
+        with tempfile.TemporaryDirectory(prefix="PyLaia-Wandb-æøå-") as directory:
+            with wandb.init(
+                project="pylaia-installation-check",
+                mode="offline",
+                dir=directory,
+                settings=wandb.Settings(
+                    disable_git=True, disable_code=True, console="off", silent=True
+                ),
+            ) as run:
+                assert run.settings.mode == "offline"
+                run.log({"installation_verified": 1})
     verify_autograd("cpu")
     if args.require_cuda and not torch.cuda.is_available():
         raise RuntimeError(
@@ -112,6 +136,13 @@ def main():
     print(
         f"Flashlight {version('flashlight-text')} / KenLM {version('kenlm')}: decoding verified"
     )
+    print(
+        f"SymPy {version('sympy')} / mpmath {version('mpmath')}: numerical evaluation verified"
+    )
+    if args.check_wandb:
+        print(
+            f"W&B {version('wandb')} / cwevals {version('cwevals')}: offline logging verified"
+        )
 
 
 if __name__ == "__main__":

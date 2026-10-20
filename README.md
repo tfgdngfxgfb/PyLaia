@@ -1,11 +1,11 @@
-# PyLaia 1.2.6+fork.20261017
+# PyLaia 1.2.7+fork.20261020
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.6+fork.20261017`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.7+fork.20261020`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
@@ -31,17 +31,20 @@ pinned Torch release. PyLaia's eager workflow does not require it. cuDNN and RNN
 dropout remain enabled and unchanged throughout execution.
 
 Python dependencies are pinned to the versions reviewed for this release.
-`mpmath` remains at 1.3.0 because current SymPy requires `<1.4`; forcing 1.4.1
-would break dependency constraints. Torch's vendored native components remain at
+Local SymPy 1.14.0+pylaia1 supports mpmath 1.4.1; optional W&B 0.31.0+pylaia1
+supports cwevals 0.0.1b2. These exact compatibility pairs are built from verified
+upstream wheels, with original algorithms/native payloads preserved and dependency
+contracts covered by regressions. See [the local wheel recipe](ci/COMPATIBILITY.md).
+Torch's vendored native components remain at
 the versions matched to its stable release, rather than being independently swapped.
 
 Pillow 13.0.0 addresses newly published security advisories affecting 12.3.0 and
 officially supports Python 3.15. Only process trusted input files. The optional
-W&B extra is 0.31.0; development tools use Ruff 0.17.1 and tox 4.66.0.
+W&B extra is 0.31.0+pylaia1; development tools use Ruff 0.17.1 and tox 4.66.0.
 The test extra pins cachetools 7.2.3, distlib 0.4.4, platformdirs 4.13.3,
 pluggy 1.7.0, pyproject-api 1.11.7, python-discovery 1.6.3 and virtualenv 21.14.9.
-mpmath 1.3.0 and W&B's cwevals 0.0.1b1 remain explicitly pinned; no beta upgrade
-or incompatible SymPy dependency override is applied.
+The new cwevals release is still a beta. Neither its cloud endpoints nor arbitrary
+future mpmath/cwevals versions are covered by this fork's offline checks.
 
 Dependencies are pinned in [pyproject.toml](pyproject.toml). Do not install the unrelated
 upstream PyPI package with `pip install pylaia`; install this checkout or the supplied
@@ -58,6 +61,7 @@ py -3.14 -m venv .venv314
 python -m pip install --upgrade pip
 # NVIDIA GPU:
 python -m pip install --no-deps torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu130
+python ci/build_compatibility.py --install
 python -m pip install -e '.[test,dev]'
 ```
 
@@ -87,6 +91,9 @@ The installer assembles a normal, versioned Torch wheel from a hash-verified off
 wheel and the bundled corrected bindings before installing it. Other dependencies
 still require network access. No compiler or Rust is needed to install the bundle;
 Flashlight, KenLM, python-bidi and PyYAML binaries are included.
+Local SymPy/mpmath wheels are installed automatically. Add `-WithWandb` to install
+the bundled optional W&B/cwevals pair. Original sources, licenses and the rebuild
+recipe accompany the local compatibility wheels; no separate fork repository is needed.
 
 For a source checkout, see [the reproducible native-build instructions](ci/PYTORCH315_BUILD.md).
 Keep `devices=1` and `strategy=auto` on Windows 3.15. Python 3.14 source

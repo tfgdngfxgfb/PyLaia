@@ -1,6 +1,6 @@
-# Security notes — PyLaia 1.2.6+fork.20261017
+# Security notes — PyLaia 1.2.7+fork.20261020
 
-Review dates: 2026-10-07, 2026-10-14 and 2026-10-17. Scope: this fork, dependency advisories, Windows packaging,
+Review dates: 2026-10-07, 2026-10-14, 2026-10-17 and 2026-10-20. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
 This is a targeted engineering review, not a formal penetration test or guarantee.
 
@@ -38,6 +38,21 @@ This is a targeted engineering review, not a formal penetration test or guarante
   unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Local SymPy/W&B compatibility pairs (2026-10-20)
+
+- Build SymPy 1.14.0+pylaia1 against mpmath 1.4.1 and W&B 0.31.0+pylaia1
+  against cwevals 0.0.1b2. This supersedes the older retained-version notes below.
+- Pin upstream wheel/source SHA256 hashes. Verify original RECORD entries, reject
+  unsafe paths, regenerate RECORD and preserve licenses/native bytes/executable
+  permissions. Exact local tags prevent silently selecting an unpatched release.
+- Only dependency metadata/version strings change; algorithms and Go/native
+  backends are retained. Tests cover upstream SymPy numerical/lambdify cases,
+  high-precision evaluation, PyTorch symbolic shapes/gradients on CPU/CUDA,
+  offline W&B logging and mock-transport sync/async cwevals contracts.
+- W&B stays optional, including the Windows installer's -WithWandb switch.
+  No upload or live account/API testing is performed. cwevals is still a beta;
+  test coverage is specific to this integration, not every upstream feature.
 
 ### Filelock and reproducible test-tool maintenance (2026-10-17)
 

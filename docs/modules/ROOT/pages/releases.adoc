@@ -1,6 +1,15 @@
 [#releases]
 = Releases
 
+== 1.2.7 — Local SymPy and W&B compatibility pairs
+
+* Supply SymPy 1.14.0+pylaia1 with mpmath 1.4.1 and optional W&B 0.31.0+pylaia1
+  with cwevals 0.0.1b2, using hash-verified upstream wheels and source archives.
+* Preserve algorithms, native backend bytes, permissions, licenses and original
+  PyLaia names. Include exact dependency/RECORD changes and the rebuild recipe.
+* Test upstream numeric cases, symbolic PyTorch CPU/CUDA gradients, offline W&B
+  CPU/CUDA logging and cwevals sync/async contracts. Retain Python 3.14/3.15.
+
 == 1.2.6 — Filelock and reproducible test-tool maintenance
 
 * Upgrade filelock to 4.2.1 and pin cachetools 7.2.3, distlib 0.4.4,

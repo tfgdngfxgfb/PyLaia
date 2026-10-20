@@ -5,6 +5,9 @@ Preserve the original MIT license and credits.
 
 Use standard Python 3.14 or 3.15. Python 3.13 support ended in 1.2.5. Follow the installation instructions
 in [README.md](README.md), including the CPU or NVIDIA PyTorch index.
+Build/install the private SymPy and W&B compatibility wheels first with
+`python ci/build_compatibility.py --install`. Tox also reads wheels from
+`dist/python-compatibility`; see [the compatibility notes](ci/COMPATIBILITY.md).
 
 Before submitting changes:
 

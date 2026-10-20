@@ -156,12 +156,15 @@ def test_pillow_16_bit_tiff_can_be_converted_for_recognition(tmp_path):
     assert torch.isfinite(tensor).all()
 
 
-def test_wandb_lightning_logger_works_offline(tmp_path, monkeypatch):
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_wandb_lightning_logger_works_offline(tmp_path, monkeypatch, device):
+    if device == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA unavailable on this runner")
     wandb = pytest.importorskip("wandb")
     from pytorch_lightning.loggers import WandbLogger
 
-    assert version("wandb") == "0.31.0"
-    assert version("cwevals") == "0.0.1b1"
+    assert version("wandb") == "0.31.0+pylaia1"
+    assert version("cwevals") == "0.0.1b2"
 
     for name in ("WANDB_DIR", "WANDB_CONFIG_DIR", "WANDB_CACHE_DIR", "WANDB_DATA_DIR"):
         directory = tmp_path / name.lower()
@@ -175,9 +178,9 @@ def test_wandb_lightning_logger_works_offline(tmp_path, monkeypatch):
     logger = WandbLogger(project="pylaia-offline-regression", save_dir=str(tmp_path))
     try:
         assert logger.experiment.settings.mode == "offline"
-        model = torch.nn.Linear(2, 1)
+        model = torch.nn.Linear(2, 1).to(device)
         logger.watch(model, log="all", log_freq=1)
-        loss = model(torch.ones(2, 2)).sum()
+        loss = model(torch.ones(2, 2, device=device)).sum()
         loss.backward()
         logger.log_hyperparams({"dependency_regression": True})
         logger.log_metrics({"loss": float(loss.detach())}, step=1)
