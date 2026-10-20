@@ -25,4 +25,8 @@ and cuDNN/dropout behavior are unchanged.
 
 mpmath 1.4.1 emits deprecation warnings for SymPy's existing bitcount calls; these
 are reported, not globally silenced. cwevals remains an upstream beta release.
+W&B/OpenTelemetry can also print `shutdown can only be called once` after a
+successful explicit backend teardown; it is a nonfatal duplicate-shutdown warning,
+not a failed run or abnormal Python exit. Installation checks close the backend
+before deleting their temporary logs.
 Future versions require separate validation rather than a broad relaxed range.

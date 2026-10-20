@@ -62,6 +62,8 @@ def test_virtualenv_creates_an_isolated_interpreter_without_network(tmp_path):
         [
             sys.executable,
             "-I",
+            "-X",
+            "utf8",
             "-m",
             "virtualenv",
             "--no-seed",
@@ -190,3 +192,4 @@ def test_wandb_lightning_logger_works_offline(tmp_path, monkeypatch, device):
         logger.finalize("success")
     finally:
         wandb.finish()
+        wandb.teardown()

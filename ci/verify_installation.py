@@ -75,16 +75,20 @@ def main():
         assert wandb.__version__ == version("wandb") == "0.31.0+pylaia1"
         assert version("cwevals") == "0.0.1b2"
         with tempfile.TemporaryDirectory(prefix="PyLaia-Wandb-æøå-") as directory:
-            with wandb.init(
-                project="pylaia-installation-check",
-                mode="offline",
-                dir=directory,
-                settings=wandb.Settings(
-                    disable_git=True, disable_code=True, console="off", silent=True
-                ),
-            ) as run:
-                assert run.settings.mode == "offline"
-                run.log({"installation_verified": 1})
+            try:
+                with wandb.init(
+                    project="pylaia-installation-check",
+                    mode="offline",
+                    dir=directory,
+                    settings=wandb.Settings(
+                        disable_git=True, disable_code=True, console="off", silent=True
+                    ),
+                ) as run:
+                    assert run.settings.mode == "offline"
+                    run.log({"installation_verified": 1})
+            finally:
+                # finish() ends the run; teardown() also closes backend file handles.
+                wandb.teardown()
     verify_autograd("cpu")
     if args.require_cuda and not torch.cuda.is_available():
         raise RuntimeError(
