@@ -44,7 +44,7 @@ def write_original(path, contents, record_override=None):
             archive.writestr(info, data)
 
 
-def patch(original, destination):
+def patch(original, destination, local_tag="pylaia1"):
     return builder.patch_wheel(
         original,
         destination,
@@ -53,6 +53,7 @@ def patch(original, destination):
         b"Requires-Dist: dependency<2",
         b"Requires-Dist: dependency==2",
         "sample/__init__.py",
+        local_tag=local_tag,
     )
 
 
@@ -98,6 +99,23 @@ def test_local_wheel_is_deterministic_and_preserves_every_other_byte(tmp_path):
                 ).rstrip(b"=")
                 assert digest == "sha256=" + encoded.decode()
                 assert int(size) == len(data)
+
+
+def test_new_local_revision_preserves_existing_wheel(tmp_path):
+    original = tmp_path / "sample-1.0-py3-none-any.whl"
+    write_original(original, wheel_contents())
+    previous = tmp_path / patch(original, tmp_path)["wheel"]
+    previous_bytes = previous.read_bytes()
+    revised = tmp_path / patch(original, tmp_path, local_tag="pylaia2")["wheel"]
+    assert revised != previous
+    assert previous.read_bytes() == previous_bytes
+    with zipfile.ZipFile(revised) as wheel:
+        assert b"Version: 1.0+pylaia2\n" in wheel.read(
+            "sample-1.0+pylaia2.dist-info/METADATA"
+        )
+        assert (
+            wheel.read("sample/bin/backend") == wheel_contents()["sample/bin/backend"]
+        )
 
 
 @pytest.mark.parametrize(

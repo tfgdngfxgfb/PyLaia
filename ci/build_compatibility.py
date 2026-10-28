@@ -40,9 +40,13 @@ ARTIFACTS = {
         "13/f2/abeec3db71d221ccd3cd89d206be1fabf5a3ee7178862f5fba23a59607e0",
         "dc4f0ea2304480d4a9a48a94c1020571558ade522b44a6912efac63a586e140f",
     ),
-    "cwevals-0.0.1b2-py3-none-any.whl": (
-        "64/9d/a11e3ed4edcf33789b0a87286bbb1972690347742f6e0150b9989db2d26a",
-        "35b7bb2634c23840d6fb4a6910f0b2d524987f824c5a501a15220863e1c85ba9",
+    "cwevals-0.0.1b3-py3-none-any.whl": (
+        "0c/d0/89df787a28354209df959267b24a56cd6ade8709098e146f286f1ac320e6",
+        "3ff43ebab38a553877da8951305924a39a6f30809aae7f567de9ed1104d7ef15",
+    ),
+    "cwevals-0.0.1b3.tar.gz": (
+        "d9/c3/f55a9932e883c768ff8abc1e9bf61d946caa30a5a5e2d580176614cd072a",
+        "2647ffa8338634db70e9cbd1d9232f0a62f2b7d7b2c5d8a2f0bb750d4aeced45",
     ),
 }
 
@@ -73,9 +77,16 @@ def replace_once(data, old, new):
 
 
 def patch_wheel(
-    original, destination, name, version, dependency_old, dependency_new, module
+    original,
+    destination,
+    name,
+    version,
+    dependency_old,
+    dependency_new,
+    module,
+    local_tag="pylaia1",
 ):
-    local_version = version + "+pylaia1"
+    local_version = version + "+" + local_tag
     old_info = f"{name}-{version}.dist-info/"
     new_info = f"{name}-{local_version}.dist-info/"
     with zipfile.ZipFile(original) as archive:
@@ -205,7 +216,11 @@ def main():
     sources = destination / "sources"
     sources.mkdir(exist_ok=True)
     platform_tag = wheel_platform()
-    for name in ("sympy-1.14.0.tar.gz", "wandb-0.31.0.tar.gz"):
+    for name in (
+        "sympy-1.14.0.tar.gz",
+        "wandb-0.31.0.tar.gz",
+        "cwevals-0.0.1b3.tar.gz",
+    ):
         fetch(name, sources)
     built = []
     for name, version, dependency_old, dependency_new, module in (
@@ -220,7 +235,7 @@ def main():
             "wandb",
             "0.31.0",
             b"Requires-Dist: cwevals==0.0.1b1",
-            b"Requires-Dist: cwevals==0.0.1b2",
+            b"Requires-Dist: cwevals==0.0.1b3",
             "wandb/__init__.py",
         ),
     ):
@@ -235,13 +250,14 @@ def main():
                 dependency_old,
                 dependency_new,
                 module,
+                local_tag="pylaia2" if name == "wandb" else "pylaia1",
             )
         )
     dependencies = [
         fetch(name, destination)
         for name in (
             "mpmath-1.4.1-py3-none-any.whl",
-            "cwevals-0.0.1b2-py3-none-any.whl",
+            "cwevals-0.0.1b3-py3-none-any.whl",
         )
     ]
     (destination / "build-info.json").write_text(

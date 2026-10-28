@@ -133,6 +133,6 @@ def test_cwevals_version_matches_the_local_wandb_requirement():
         for item in distribution("pylaia").requires
         if Requirement(item).name.lower() == "cwevals"
     )
-    assert str(requirement.specifier) == "==0.0.1b2"
+    assert str(requirement.specifier) == "==0.0.1b3"
     assert requirement.marker.evaluate({"extra": "wandb"})
     assert not requirement.marker.evaluate({"extra": ""})

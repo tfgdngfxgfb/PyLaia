@@ -65,14 +65,14 @@ def test_torch_symbolic_shapes_with_local_sympy(device):
 
 def test_local_wandb_dependency_metadata():
     pytest.importorskip("wandb")
-    assert version("wandb") == "0.31.0+pylaia1"
-    assert version("cwevals") == "0.0.1b2"
+    assert version("wandb") == "0.31.0+pylaia2"
+    assert version("cwevals") == "0.0.1b3"
     requirement = next(
         Requirement(r)
         for r in distribution("wandb").requires
         if Requirement(r).name == "cwevals"
     )
-    assert str(requirement.specifier) == "==0.0.1b2"
+    assert str(requirement.specifier) == "==0.0.1b3"
 
 
 @pytest.mark.parametrize("asynchronous", [False, True])

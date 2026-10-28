@@ -214,8 +214,8 @@ def test_wandb_lightning_logger_works_offline(tmp_path, monkeypatch, device):
     wandb = pytest.importorskip("wandb")
     from pytorch_lightning.loggers import WandbLogger
 
-    assert version("wandb") == "0.31.0+pylaia1"
-    assert version("cwevals") == "0.0.1b2"
+    assert version("wandb") == "0.31.0+pylaia2"
+    assert version("cwevals") == "0.0.1b3"
 
     for name in ("WANDB_DIR", "WANDB_CONFIG_DIR", "WANDB_CACHE_DIR", "WANDB_DATA_DIR"):
         directory = tmp_path / name.lower()

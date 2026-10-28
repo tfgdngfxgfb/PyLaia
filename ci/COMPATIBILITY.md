@@ -8,7 +8,7 @@ use `Install-PyLaia.ps1 -WithWandb` to install the bundled W&B/cwevals pair.
 The recipe downloads SHA256-pinned upstream wheels/source archives and produces:
 
 - `sympy==1.14.0+pylaia1` requiring `mpmath==1.4.1`.
-- `wandb==0.31.0+pylaia1` requiring `cwevals==0.0.1b2`.
+- `wandb==0.31.0+pylaia2` requiring `cwevals==0.0.1b3`.
 
 Only the exact dependency requirement, public version string, dist-info name and
 RECORD are changed. Existing Python algorithms, native/Go backend bytes, licenses

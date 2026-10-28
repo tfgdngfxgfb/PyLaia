@@ -56,7 +56,7 @@ $taskFlashlight = Join-Path $taskWheelFolder ('flashlight_text-0.0.7+pylaia1-' +
 $taskPylaia = Join-Path $PSScriptRoot ('wheels\' + $taskManifest.pylaia_wheel)
 $taskInstallTargets = @($taskSympy, $taskMpmath, $taskKenlm, $taskFlashlight, ($taskPylaia + '[language-model]'))
 if ($WithWandb) {
-    $taskInstallTargets += @((Join-Path $taskCompatibility 'wandb-0.31.0+pylaia1-py3-none-win_amd64.whl'), (Join-Path $taskCompatibility 'cwevals-0.0.1b2-py3-none-any.whl'))
+    $taskInstallTargets += @((Join-Path $taskCompatibility 'wandb-0.31.0+pylaia2-py3-none-win_amd64.whl'), (Join-Path $taskCompatibility 'cwevals-0.0.1b3-py3-none-any.whl'))
 }
 if ($PythonVersion -eq '3.15') {
     $taskBidi = Join-Path $taskWheelFolder 'python_bidi-0.6.12-cp315-cp315-win_amd64.whl'

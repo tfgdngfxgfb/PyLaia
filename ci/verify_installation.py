@@ -90,8 +90,8 @@ def main():
     if args.check_wandb:
         import wandb
 
-        assert wandb.__version__ == version("wandb") == "0.31.0+pylaia1"
-        assert version("cwevals") == "0.0.1b2"
+        assert wandb.__version__ == version("wandb") == "0.31.0+pylaia2"
+        assert version("cwevals") == "0.0.1b3"
         with tempfile.TemporaryDirectory(prefix="PyLaia-Wandb-æøå-") as directory:
             try:
                 with wandb.init(

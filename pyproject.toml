@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylaia"
-version = "1.2.10+fork.20261028"
+version = "1.2.11+fork.20261028"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
@@ -85,7 +85,7 @@ test = [
     "xxhash==4.0.2",
     "wcwidth==0.9.4",
 ]
-wandb = ["wandb==0.31.0+pylaia1", "cwevals==0.0.1b2"]
+wandb = ["wandb==0.31.0+pylaia2", "cwevals==0.0.1b3"]
 language-model = [
     "torchaudio==2.11.1; python_version < '3.15'",
     "flashlight-text==0.0.7",

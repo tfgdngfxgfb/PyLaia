@@ -36,7 +36,13 @@ def main():
     (destination / "wheels").mkdir()
     shutil.copy2(ROOT / "dist" / wheel_name, destination / "wheels" / wheel_name)
     compatibility = ROOT / "dist/python-compatibility"
-    shutil.copytree(compatibility, destination / "compatibility")
+    shutil.copytree(
+        compatibility,
+        destination / "compatibility",
+        ignore=shutil.ignore_patterns(
+            "wandb-0.31.0+pylaia1-*.whl", "cwevals-0.0.1b2-*.whl"
+        ),
+    )
     for tag in ("cp314", "cp315"):
         source = ROOT / "dist/language-model" / tag
         wheels = destination / "wheels" / tag

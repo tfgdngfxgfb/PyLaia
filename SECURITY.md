@@ -1,4 +1,4 @@
-# Security notes — PyLaia 1.2.10+fork.20261028
+# Security notes — PyLaia 1.2.11+fork.20261028
 
 Review dates: 2026-10-07, 2026-10-14, 2026-10-17, 2026-10-20 and 2026-10-28. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
@@ -38,6 +38,16 @@ This is a targeted engineering review, not a formal penetration test or guarante
   unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Optional cwevals/W&B refresh (2026-10-28, 1.2.11)
+
+- Upgrade cwevals to 0.0.1b3 from SHA256-verified official wheel/source archives.
+- Rebuild optional W&B as 0.31.0+pylaia2 with an exact cwevals 0.0.1b3 requirement.
+  Only version/dependency metadata, the public version string and RECORD change;
+  original algorithms, native backend and licenses are preserved.
+- Keep previous wheel revisions and release archives; exclude superseded optional
+  wheels from the new bundle. Local CPU/GPU and Python 3.14 results accompany the
+  release. CI is not run or pushed. No live cloud service or account is used.
 
 ### Dependency refresh (2026-10-28, 1.2.10)
 
