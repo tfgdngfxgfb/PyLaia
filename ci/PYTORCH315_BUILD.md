@@ -1,4 +1,9 @@
-# Windows Python 3.15 PyTorch bindings
+# Historical Windows Python 3.15 PyTorch 2.14.1 binding rebuild
+
+**Historical recipe for 1.2.8 and earlier only.** PyLaia 1.2.9 uses unmodified
+official PyTorch 2.15.0 CPU/CUDA 13.2 wheels instead. The current installer
+downloads SHA256-pinned official wheels and does not run this rebuild or replace
+Torch DLLs. The original scripts and old release archives are retained for recovery.
 
 The official 2.14.1 Windows cp315 CPU/CUDA wheels have a thread-state ABI mismatch
 in Python autograd callbacks. Rebuilding only the Python bindings against the

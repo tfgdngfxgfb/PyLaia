@@ -12,11 +12,14 @@ def ensure_supported_runtime():
     """Reject Windows 3.15 wheels built against an incompatible thread-state ABI."""
     if platform != "win32" or version_info[:2] != (3, 15):
         return
+    official = {"2.15.0+cpu": None, "2.15.0+cu132": "13.2"}
+    version = str(torch.__version__)
+    if version in official and official[version] == torch.version.cuda:
+        return
     supported = {
         "2.14.1+pylaia315cpu": None,
         "2.14.1+pylaia315cu132": "13.2",
     }
-    version = str(torch.__version__)
     if (
         version not in supported
         or supported[version] != torch.version.cuda
@@ -25,9 +28,9 @@ def ensure_supported_runtime():
         raise RuntimeError(
             "Official Windows Python 3.15 PyTorch 2.14.1 wheels have an incompatible "
             "thread-state ABI in Python autograd callbacks (CPU and CUDA), including "
-            "a native autograd-thread shutdown crash on CUDA. Install the corrected "
-            "Python 3.15 PyTorch bindings supplied with this build, or use Python "
-            "3.14. cuDNN has not been disabled."
+            "a native autograd-thread shutdown crash on CUDA. Install official "
+            "PyTorch 2.15.0 CPU or CUDA 13.2 wheels using this build's installer. "
+            "Other Windows 3.15 variants are not validated. cuDNN has not been disabled."
         )
 
 

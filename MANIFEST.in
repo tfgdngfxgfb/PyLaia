@@ -3,7 +3,7 @@ exclude CONTRIBUTING.md
 include SECURITY.md
 include ci/build_language_model.py
 include ci/build-language-model.ps1
-recursive-include ci *.py *.ps1 *.md *.txt
+recursive-include ci *.py *.ps1 *.md *.txt *.json
 
 prune .github
 prune benchmarks

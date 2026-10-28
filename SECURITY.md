@@ -1,6 +1,6 @@
-# Security notes — PyLaia 1.2.8+fork.20261020
+# Security notes — PyLaia 1.2.9+fork.20261028
 
-Review dates: 2026-10-07, 2026-10-14, 2026-10-17 and 2026-10-20. Scope: this fork, dependency advisories, Windows packaging,
+Review dates: 2026-10-07, 2026-10-14, 2026-10-17, 2026-10-20 and 2026-10-28. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
 This is a targeted engineering review, not a formal penetration test or guarantee.
 
@@ -38,6 +38,33 @@ This is a targeted engineering review, not a formal penetration test or guarante
   unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Official PyTorch 2.15 migration (2026-10-28, 1.2.9)
+
+- Use official PyTorch 2.15.0 CPU/CUDA 13.2 wheels on Python 3.14/3.15, matching
+  TorchVision 0.29.2 and TorchAudio 2.11.1 on 3.14. No locally rebuilt Torch DLLs
+  are included in this release. The old 2.14.1 recipes below are historical.
+- Pin official Windows wheel SHA256 values and verify installed native binding/
+  computation files against RECORD. Keep plain-Torch main/worker-thread backward
+  and normal-exit regressions, independent of importing PyLaia.
+- Preserve the local SymPy/mpmath and optional W&B/cwevals pairs, safe checkpoint
+  loading, original names/commands, enabled cuDNN and unchanged model dropout.
+- Plain official 2.15.0+cu132 passes main/worker-thread autograd and normal exit
+  on Python 3.15 without PyLaia. The separate plain cuDNN LSTM/dropout shutdown
+  still reproduces exit 0xC0000409, so the existing PyLaia exit-cache cleanup is
+  retained. It does not replace a binding or disable cuDNN/dropout.
+- The user requested local CPU/GPU validation and no CI execution. No new CI
+  success is claimed. The workflow definition is updated, but is not dispatched
+  or pushed as part of this local release. Results accompany the final build.
+- Final local full suites: Python 3.15 CPU 1296 passed/16 skipped/2 xfailed;
+  Python 3.15 CUDA 1346 passed/9 skipped/2 xfailed; Python 3.14 CUDA
+  1350 passed/5 skipped/2 xfailed. All exited normally; unhandled thread warnings
+  were treated as errors. Both Python versions passed the selected upstream
+  SymPy suites (192 passed/23 skipped/2 xfailed). No known advisory findings in
+  the resolved CPU/GPU test dependencies after normalization to base versions.
+- A legacy pytest path object passed to pandas.read_csv needed conversion to a
+  normal string under pandas 3.1. Only the test fixture was corrected; logger
+  behavior and its assertions were not weakened.
 
 ### Runtime and test-tool maintenance (2026-10-20, 1.2.8)
 

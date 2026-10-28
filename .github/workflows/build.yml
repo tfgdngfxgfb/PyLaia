@@ -20,7 +20,7 @@ jobs:
       - run: python -m pip install pip==26.2.2 pre-commit==4.7.0 ruff==0.17.1
       - run: pre-commit run --all-files
   torch315-windows:
-    name: Python 3.15 / windows-2022 (rebuilt bindings)
+    name: Python 3.15 / windows-2022 (official bindings)
     runs-on: windows-2022
     timeout-minutes: 180
     env:
@@ -33,23 +33,14 @@ jobs:
         id: python
         with:
           python-version: '3.15'
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        id: bindings
-        with:
-          path: dist/pytorch315
-          key: torch-2.14.1-windows2022-v143-${{ steps.python.outputs.python-version }}-${{ hashFiles('ci/build_torch315.py', 'ci/build-torch315.ps1', 'ci/assemble_torch315_wheel.py', 'ci/build_language_model.py') }}
-      - name: Rebuild CPython-facing bindings (official computation libraries unchanged)
-        if: steps.bindings.outputs.cache-hit != 'true'
-        shell: pwsh
-        run: ./ci/build-torch315.ps1 -Python python -TorchBuild CPU -Jobs 2
+      - name: Install official CPU PyTorch and TorchVision
+        run: python -m pip install --no-deps torch==2.15.0 torchvision==0.29.2 --index-url https://download.pytorch.org/whl/cpu
       - name: Verify plain Torch callbacks and process shutdown
         run: |
-          python -m pip install dist/pytorch315/torch-2.14.1+pylaia315cpu-cp315-cp315-win_amd64.whl
-          python -I ci/verify_torch_runtime.py --device cpu
+          python -I ci/verify_torch_runtime.py --device cpu --verify-official
       - name: Install PyLaia and CPU TorchVision
         run: |
           python ci/build_compatibility.py --install
-          python -m pip install --no-deps torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
           python -m pip install '.[test,wandb]'
       - name: Test
         run: python -m pytest --cov=laia --cov-report=term-missing tests
@@ -65,13 +56,6 @@ jobs:
           python -m pip_audit --local --skip-editable --progress-spinner off
           python ci/audit_requirements.py --output audit-requirements.txt
           python -m pip_audit --disable-pip --no-deps -r audit-requirements.txt --progress-spinner off
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: torch315-windows-cpu
-          path: dist/pytorch315/torch-2.14.1+pylaia315cpu-cp315-cp315-win_amd64.whl
-          if-no-files-found: error
-          retention-days: 7
-          compression-level: 0
   test:
     name: Python ${{ matrix.python }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -93,7 +77,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Install official CPU PyTorch
-        run: python -m pip install --no-deps torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
+        run: python -m pip install --no-deps torch==2.15.0 torchvision==0.29.2 --index-url https://download.pytorch.org/whl/cpu
       - name: Install PyLaia and test tools
         run: |
           python ci/build_compatibility.py --install
@@ -130,19 +114,8 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python }}
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        if: matrix.python == '3.15'
-        with:
-          name: torch315-windows-cpu
-          path: dist/pytorch315
       - name: Install official CPU PyTorch
-        if: matrix.python != '3.15'
-        run: python -m pip install --no-deps torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
-      - name: Install corrected Windows Python 3.15 CPU PyTorch
-        if: matrix.python == '3.15'
-        run: |
-          python -m pip install --no-deps dist/pytorch315/torch-2.14.1+pylaia315cpu-cp315-cp315-win_amd64.whl
-          python -m pip install --no-deps torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
+        run: python -m pip install --no-deps torch==2.15.0 torchvision==0.29.2 --index-url https://download.pytorch.org/whl/cpu
       - name: Install PyLaia
         run: |
           python ci/build_compatibility.py --install

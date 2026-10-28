@@ -287,7 +287,7 @@ def main():
                     if sys.version_info[:2] >= (3, 15)
                     else []
                 ),
-                *(["torchaudio==2.11.0"] if sys.version_info[:2] < (3, 15) else []),
+                *(["torchaudio==2.11.1"] if sys.version_info[:2] < (3, 15) else []),
             ],
             check=True,
         )

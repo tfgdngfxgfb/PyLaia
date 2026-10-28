@@ -13,8 +13,14 @@ $taskManifest = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'build-info.js
 if ($taskManifest.windows_support.$PythonVersion -notcontains $TorchBuild) {
     throw 'This runtime/backend combination is not supported by this bundle. No files were changed.'
 }
-if ($PythonVersion -eq '3.15' -and -not $taskManifest.pytorch315_bindings) {
-    throw 'Python 3.15 requires the corrected PyTorch binding payload. No files were changed.'
+if ($taskManifest.pytorch.binding_source -ne 'official' -or $taskManifest.pytorch.version -ne '2.15.0') {
+    throw 'This installer requires the official PyTorch 2.15 build manifest. No files were changed.'
+}
+$taskTorchArtifact = $taskManifest.pytorch.wheels.($PythonVersion + '-' + $TorchBuild)
+$taskVisionArtifact = $taskManifest.pytorch.torchvision.$TorchBuild
+if (-not $taskTorchArtifact -or -not $taskVisionArtifact) { throw 'Missing official wheel profile. No files were changed.' }
+if ($OriginalTorchWheel -and (Get-FileHash -LiteralPath $OriginalTorchWheel -Algorithm SHA256).Hash -ne $taskTorchArtifact.sha256) {
+    throw 'Cached official Torch wheel checksum differs from the selected profile. No files were changed.'
 }
 foreach ($taskEntry in $taskManifest.files) {
     $taskFile = Join-Path $PSScriptRoot $taskEntry.path
@@ -31,51 +37,33 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not create the Python environment.' }
 $taskPython = Join-Path $InstallationPath 'Scripts\python.exe'
 & $taskPython -m pip install --upgrade 'pip==26.2.2'
 if ($LASTEXITCODE -ne 0) { throw 'Isolated installer update failed.' }
-$taskTorchIndex = 'https://download.pytorch.org/whl/cpu'
-if ($TorchBuild -eq 'CUDA') { $taskTorchIndex = 'https://download.pytorch.org/whl/cu130' }
-Write-Host ('Installing PyTorch packages (' + $TorchBuild + ')')
-if ($PythonVersion -eq '3.15') {
-    if ($TorchBuild -eq 'CUDA') { $taskTorchIndex = 'https://download.pytorch.org/whl/cu132' }
-    $taskBuildName = $TorchBuild.ToLowerInvariant()
-    $taskPayload = Join-Path $PSScriptRoot ('torch315\' + $taskBuildName)
-    $taskTorchWheels = Join-Path $InstallationPath 'torch-wheels'
-    $taskAssembler = Join-Path $PSScriptRoot 'build-tools\assemble_torch315_wheel.py'
-    $taskAssemblerArgs = @('-I', $taskAssembler, '--build', $TorchBuild, '--payload', $taskPayload, '--output-dir', $taskTorchWheels)
-    if ($OriginalTorchWheel) { $taskAssemblerArgs += @('--original-wheel', $OriginalTorchWheel) }
-    & $taskPython @taskAssemblerArgs
-    if ($LASTEXITCODE -ne 0) { throw 'Verified Python 3.15 PyTorch wheel assembly failed.' }
-    $taskTorchVersion = $taskManifest.pytorch315_bindings.$taskBuildName.version
-    $taskTorchWheel = Join-Path $taskTorchWheels ('torch-' + $taskTorchVersion + '-cp315-cp315-win_amd64.whl')
-    & $taskPython -m pip install --no-deps $taskTorchWheel
-    if ($LASTEXITCODE -ne 0) { throw 'Corrected PyTorch installation failed.' }
-    & $taskPython -m pip install --no-deps 'torchvision==0.29.1' --index-url $taskTorchIndex
+Write-Host ('Installing SHA256-pinned official PyTorch packages (' + $TorchBuild + ')')
+if ($OriginalTorchWheel) {
+    & $taskPython -m pip install --no-deps $OriginalTorchWheel
 } else {
-    & $taskPython -m pip install --no-deps 'torch==2.14.1' 'torchvision==0.29.1' --index-url $taskTorchIndex
+    & $taskPython -m pip install --no-deps ($taskTorchArtifact.url + '#sha256=' + $taskTorchArtifact.sha256)
 }
 if ($LASTEXITCODE -ne 0) { throw 'PyTorch installation failed.' }
+& $taskPython -m pip install --no-deps ($taskVisionArtifact.url + '#sha256=' + $taskVisionArtifact.sha256)
+if ($LASTEXITCODE -ne 0) { throw 'TorchVision installation failed.' }
 Write-Host 'Installing local Flashlight/KenLM and PyLaia'
 $taskCompatibility = Join-Path $PSScriptRoot 'compatibility'
 $taskSympy = Join-Path $taskCompatibility 'sympy-1.14.0+pylaia1-py3-none-any.whl'
 $taskMpmath = Join-Path $taskCompatibility 'mpmath-1.4.1-py3-none-any.whl'
-& $taskPython -m pip install $taskSympy $taskMpmath
-if ($LASTEXITCODE -ne 0) { throw 'Local SymPy/mpmath installation failed.' }
-if ($WithWandb) {
-    & $taskPython -m pip install (Join-Path $taskCompatibility 'wandb-0.31.0+pylaia1-py3-none-win_amd64.whl') (Join-Path $taskCompatibility 'cwevals-0.0.1b2-py3-none-any.whl')
-    if ($LASTEXITCODE -ne 0) { throw 'Local W&B/cwevals installation failed.' }
-}
 $taskWheelFolder = Join-Path $PSScriptRoot ('wheels\' + $taskTag)
 $taskKenlm = Join-Path $taskWheelFolder ('kenlm-0.3.0+pylaia1-' + $taskTag + '-' + $taskTag + '-win_amd64.whl')
 $taskFlashlight = Join-Path $taskWheelFolder ('flashlight_text-0.0.7+pylaia1-' + $taskTag + '-' + $taskTag + '-win_amd64.whl')
 $taskPylaia = Join-Path $PSScriptRoot ('wheels\' + $taskManifest.pylaia_wheel)
-& $taskPython -m pip install --no-deps $taskKenlm $taskFlashlight
-if ($LASTEXITCODE -ne 0) { throw 'Local native package installation failed.' }
+$taskInstallTargets = @($taskSympy, $taskMpmath, $taskKenlm, $taskFlashlight, ($taskPylaia + '[language-model]'))
+if ($WithWandb) {
+    $taskInstallTargets += @((Join-Path $taskCompatibility 'wandb-0.31.0+pylaia1-py3-none-win_amd64.whl'), (Join-Path $taskCompatibility 'cwevals-0.0.1b2-py3-none-any.whl'))
+}
 if ($PythonVersion -eq '3.15') {
     $taskBidi = Join-Path $taskWheelFolder 'python_bidi-0.6.12-cp315-cp315-win_amd64.whl'
     $taskYaml = Join-Path $taskWheelFolder 'pyyaml-6.0.3-cp315-cp315-win_amd64.whl'
-    & $taskPython -m pip install --no-deps $taskBidi $taskYaml
-    if ($LASTEXITCODE -ne 0) { throw 'Local Python 3.15 text/configuration package installation failed.' }
+    $taskInstallTargets += @($taskBidi, $taskYaml)
 }
-& $taskPython -m pip install ($taskPylaia + '[language-model]')
+& $taskPython -m pip install @taskInstallTargets
 if ($LASTEXITCODE -ne 0) { throw 'PyLaia installation failed.' }
 & $taskPython -m pip check
 if ($LASTEXITCODE -ne 0) { throw 'Dependency verification failed.' }

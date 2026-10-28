@@ -90,7 +90,7 @@ def test_epoch_csv_logger(tmpdir, num_processes):
         )
         trainer.fit(DummyEngine(), datamodule=DummyMNIST(batch_size=2))
 
-        csv = pd.read_csv(tmpdir / csv_filename)
+        csv = pd.read_csv(str(tmpdir / csv_filename))
         # check epoch values
         assert (
             list(csv["epoch"].values)

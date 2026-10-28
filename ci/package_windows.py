@@ -79,11 +79,7 @@ def main():
         ("ci/verify_torch_runtime.py", "verify_torch_runtime.py"),
         ("ci/build_compatibility.py", "build-tools/build_compatibility.py"),
         ("ci/COMPATIBILITY.md", "build-tools/COMPATIBILITY.md"),
-        ("ci/assemble_torch315_wheel.py", "build-tools/assemble_torch315_wheel.py"),
-        ("ci/build_torch315.py", "build-tools/build_torch315.py"),
-        ("ci/build-torch315.ps1", "build-tools/build-torch315.ps1"),
-        ("ci/prepare_cuda_sdk.py", "build-tools/prepare_cuda_sdk.py"),
-        ("ci/PYTORCH315_BUILD.md", "build-tools/PYTORCH315_BUILD.md"),
+        ("ci/torch215-wheels.json", "build-tools/torch215-wheels.json"),
         ("ci/build_language_model.py", "build-tools/build_language_model.py"),
         ("ci/build-language-model.ps1", "build-tools/build-language-model.ps1"),
         ("ci/WINDOWS_BUILD_README.txt", "LES-MEG.txt"),
@@ -95,13 +91,9 @@ def main():
         target_path = destination / target
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / source, target_path)
-    bindings = {}
-    for backend in ("cpu", "cuda"):
-        source = ROOT / "dist/pytorch315" / backend
-        bindings[backend] = json.loads(
-            (source / "build-info.json").read_text(encoding="utf-8")
-        )
-        shutil.copytree(source, destination / "torch315" / backend)
+    official_torch = json.loads(
+        (ROOT / "ci/torch215-wheels.json").read_text(encoding="utf-8")
+    )
     manifest = {
         "product": "PyLaia",
         "distribution": project["name"],
@@ -116,7 +108,8 @@ def main():
             "3.14": ["CPU", "CUDA"],
             "3.15": ["CPU", "CUDA"],
         },
-        "pytorch315_bindings": bindings,
+        "pytorch": official_torch,
+        "ci_validation": "not_run_at_user_request",
         "windows315_distributed_supported": False,
         "requires_network_for_other_dependencies": True,
         "files": [],

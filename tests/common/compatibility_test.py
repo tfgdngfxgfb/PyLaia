@@ -88,9 +88,14 @@ def test_known_crashing_runtime_is_rejected(
         ("2.14.1+pylaia315cu132", "13.0", 1, True),
         ("2.14.1+pylaia315cpu", None, None, True),
         ("2.14.1+cu132", "13.2", 1, True),
+        ("2.15.0+cpu", None, None, False),
+        ("2.15.0+cu132", "13.2", None, False),
+        ("2.15.0+cu132", "13.0", None, True),
+        ("2.15.0+cpu", "13.2", None, True),
+        ("2.15.0+cu134", "13.4", None, True),
     ],
 )
-def test_windows315_requires_rebuilt_bindings(
+def test_windows315_requires_validated_official_or_legacy_corrected_bindings(
     monkeypatch, version, cuda, marker, blocked
 ):
     monkeypatch.setattr(compatibility, "platform", "win32")

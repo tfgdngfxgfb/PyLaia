@@ -20,8 +20,8 @@ Regressions cover upstream SymPy numerical/lambdify tests, high-precision numeri
 integration, PyTorch dynamic symbolic shapes and gradients on CPU/CUDA, offline
 W&B/Lightning logging on CPU/CUDA and cwevals sync/async HTTP contracts using a
 mock transport. No account login, network upload or live cloud API test is needed.
-Python 3.14 and 3.15 stay supported. The existing corrected Torch Python bindings
-and cuDNN/dropout behavior are unchanged.
+Python 3.14 and 3.15 stay supported. Release 1.2.9 uses official PyTorch 2.15.0
+bindings instead of the old local 2.14.1 rebuild; cuDNN/dropout behavior is unchanged.
 
 mpmath 1.4.1 emits deprecation warnings for SymPy's existing bitcount calls; these
 are reported, not globally silenced. cwevals remains an upstream beta release.

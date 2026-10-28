@@ -1,33 +1,32 @@
-# PyLaia 1.2.8+fork.20261020
+# PyLaia 1.2.9+fork.20261028
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.8+fork.20261020`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.9+fork.20261028`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
 
 - Python **3.15.0**: single-device **CPU and NVIDIA GPU on Windows**, using the
-  supplied corrected PyTorch bindings. The Windows installer defaults to 3.15/CUDA.
+  official PyTorch 2.15 bindings. The Windows installer defaults to 3.15/CUDA.
 - Python **3.14.8** retains CPU and NVIDIA GPU support. Python 3.13 is no longer supported.
-- PyTorch **2.14.1**, TorchVision **0.29.1**, Lightning **2.6.6**.
+- PyTorch **2.15.0**, TorchVision **0.29.2**, Lightning **2.6.6**.
 - NumPy **2.5.4**, Pillow **13.0.0**, filelock **4.2.4**, python-bidi **0.6.12**.
-- CUDA **13.2** on Python 3.15; CUDA **13.0** on 3.14, with a compatible driver
+- CUDA **13.2** on both Python versions, with a compatible driver
   and cuDNN enabled. Free-threaded Python is not supported.
 
-The official Windows Torch 2.14.1 CPU and CUDA wheels have a CPython 3.15 thread-state
-ABI mismatch in Python autograd callbacks. CUDA 12.6, 13.0 and 13.2 also reproduce a
-native shutdown crash without PyLaia. The supplied 3.15 binding builds are compiled
-against the actual 3.15 headers: `2.14.1+pylaia315cpu` and `2.14.1+pylaia315cu132`.
-The official computation libraries and CUDA/cuDNN DLLs are retained unchanged.
-Do not install the uncorrected official 3.15 wheels directly; PyLaia rejects them.
+This release uses unmodified official Windows PyTorch 2.15.0 wheels on CPU and CUDA.
+Their downloads are SHA256-pinned in `ci/torch215-wheels.json`; native installed
+files are checked against wheel RECORD hashes. No custom Torch binding or DLL is
+substituted. The binding rebuild needed by 2.14.1 is now historical; its recipes
+and previous release ZIPs are preserved, but are not used by the new installer.
 
 Windows 3.15 distributed/Gloo execution remains unvalidated and blocked; use
-3.14 for distributed training. `torch.compile` on 3.15 is unsupported by the
-pinned Torch release. PyLaia's eager workflow does not require it. cuDNN and RNN
+3.14 for distributed training. This release qualifies PyLaia's eager workflow,
+not `torch.compile` or free-threaded Python. cuDNN and RNN
 dropout remain enabled and unchanged throughout execution.
 
 Python dependencies are pinned to the versions reviewed for this release.
@@ -62,7 +61,7 @@ py -3.14 -m venv .venv314
 .\.venv314\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 # NVIDIA GPU:
-python -m pip install --no-deps torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu130
+python -m pip install --no-deps torch==2.15.0 torchvision==0.29.2 --index-url https://download.pytorch.org/whl/cu132
 python ci/build_compatibility.py --install
 python -m pip install -e '.[test,dev]'
 ```
@@ -82,24 +81,24 @@ Increase `--data.num_workers` when appropriate.
 
 ### Python 3.15 on Windows (CPU or NVIDIA GPU)
 
-The Windows bundle includes Python 3.14/3.15 runtimes and the corrected binding binaries:
+The Windows bundle includes Python 3.14/3.15 runtimes and the local compatibility packages:
 
 ```powershell
 .\Install-PyLaia.ps1 -PythonVersion 3.15 -TorchBuild CUDA
 .\Install-PyLaia.ps1 -PythonVersion 3.15 -TorchBuild CPU
 ```
 
-The installer assembles a normal, versioned Torch wheel from a hash-verified official
-wheel and the bundled corrected bindings before installing it. Other dependencies
+The installer downloads SHA256-pinned official Torch/TorchVision wheels without
+modifying their bindings. `-OriginalTorchWheel` can supply an already downloaded
+official Torch wheel; its hash must match the selected profile. Other dependencies
 still require network access. No compiler or Rust is needed to install the bundle;
 Flashlight, KenLM, python-bidi and PyYAML binaries are included.
 Local SymPy/mpmath wheels are installed automatically. Add `-WithWandb` to install
 the bundled optional W&B/cwevals pair. Original sources, licenses and the rebuild
 recipe accompany the local compatibility wheels; no separate fork repository is needed.
 
-For a source checkout, see [the reproducible native-build instructions](ci/PYTORCH315_BUILD.md).
-Keep `devices=1` and `strategy=auto` on Windows 3.15. Python 3.14 source
-installation uses the unchanged official Torch commands above.
+For a source checkout, use the official Torch commands above on either Python
+version. Keep `devices=1` and `strategy=auto` on Windows 3.15.
 
 ## Tools and example
 
@@ -174,7 +173,7 @@ This bundle is not fully offline. Linux language-model source builds are not ver
 
 ### Windows cuDNN shutdown compatibility
 
-The official Torch 2.14.1+cu130 build on this Windows machine could complete
+Historically, the official Torch 2.14.1+cu130 build on this Windows machine could complete
 multi-layer LSTM/dropout computations and then terminate at interpreter shutdown
 with status `0xC0000409`. This was reproduced with `torch.nn.LSTM` alone, without
 PyLaia, Flashlight or pytest. Ordinary GPU-memory cleanup did not fix it.
@@ -207,16 +206,18 @@ no external trained model is needed for the new workflow test.
 GitHub Actions checks Python 3.14/3.15 on Windows/Linux. There is no automatic
 PyPI, public documentation, coverage upload, or Docker-registry publishing.
 Windows language-model builds/tests and dependency advisory checks are also included.
-Windows 3.15 tests use the corrected CPU bindings, including plain-Torch autograd
+Windows 3.15 tests now use official 2.15 CPU bindings, including plain-Torch autograd
 and normal-shutdown checks. Two inherited DDP/Gloo helper tests are explicitly
 skipped on Windows 3.15 because of a reproduced native crash; they remain enabled
 on 3.14 and Linux. GPU tests skip in CPU-only CI; GPU validation is local. Tests
 also cover generated-image training/resume/decoding, Pillow raster/16-bit TIFF
 loading, and W&B logging in offline mode. Current and historical validation
 results are recorded in SECURITY.md. Python 3.15 distributed support is not implied.
+For 1.2.9 the user explicitly requested local-only verification: no GitHub CI run
+is performed or claimed. The workflow definition is updated for future use only.
 
 The Dockerfile uses Python 3.14 and CPU PyTorch by default. For NVIDIA,
-build with `--build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu130`
+build with `--build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu132`
 and run with NVIDIA Container Toolkit/`--gpus all`. Docker must be installed
 separately; local Windows verification does not imply the image has been built.
 

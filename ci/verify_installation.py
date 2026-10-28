@@ -13,11 +13,13 @@ from laia.common.loader import BasicLoader
 from laia.decoders import CTCLanguageDecoder
 
 if __package__:
-    from .verify_torch_runtime import verify_autograd
+    from .verify_torch_runtime import verify_autograd, verify_official_torch
 else:
-    verify_autograd = runpy.run_path(
+    _runtime_checks = runpy.run_path(
         str(Path(__file__).with_name("verify_torch_runtime.py"))
-    )["verify_autograd"]
+    )
+    verify_autograd = _runtime_checks["verify_autograd"]
+    verify_official_torch = _runtime_checks["verify_official_torch"]
 
 TOKENS = "<ctc>\na\ne\nh\ni\ns\nt\n.\n<unk>\n<space>\n"
 LEXICON = "\n".join(f"{token} {token}" for token in TOKENS.splitlines()) + "\n"
@@ -64,6 +66,11 @@ def main():
     args = parser.parse_args()
     import sympy as sp
     from bidi import get_display
+
+    verify_official_torch()
+    assert version("torchvision").split("+")[0] == "0.29.2"
+    if torch.version.cuda is not None:
+        assert torch.version.cuda == "13.2"
 
     for package, expected in {
         "filelock": "4.2.4",

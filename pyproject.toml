@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylaia"
-version = "1.2.8+fork.20261020"
+version = "1.2.9+fork.20261028"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
@@ -32,9 +32,9 @@ dependencies = [
     "pytorch-lightning==2.6.6",
     "scipy==1.18.1",
     "textdistance==4.6.3",
-    "torch==2.14.1",
+    "torch==2.15.0",
     "torchmetrics==1.9.0",
-    "torchvision==0.29.1",
+    "torchvision==0.29.2",
     "mdutils==1.8.1",
     "prettytable==3.18.0",
     "python-bidi==0.6.12",
@@ -87,7 +87,7 @@ test = [
 ]
 wandb = ["wandb==0.31.0+pylaia1", "cwevals==0.0.1b2"]
 language-model = [
-    "torchaudio==2.11.0; python_version < '3.15'",
+    "torchaudio==2.11.1; python_version < '3.15'",
     "flashlight-text==0.0.7",
     "kenlm==0.3.0",
 ]
