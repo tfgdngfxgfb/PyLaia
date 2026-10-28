@@ -75,7 +75,8 @@ def main():
     for package, expected in {
         "filelock": "4.2.4",
         "python-bidi": "0.6.12",
-        "setuptools": "84.2.0",
+        "setuptools": "84.2.1",
+        "jsonargparse": "4.53.0",
         "pip": "26.2.2",
     }.items():
         assert version(package) == expected, (package, version(package), expected)

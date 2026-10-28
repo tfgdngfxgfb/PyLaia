@@ -1,5 +1,5 @@
-PyLaia 1.2.9+fork.20261028 — privat Windows-bygg
-Versjon 1.2.9+fork.20261028. Dette er ikke den offisielle PyLaia-utgaven.
+PyLaia 1.2.10+fork.20261028 — privat Windows-bygg
+Versjon 1.2.10+fork.20261028. Dette er ikke den offisielle PyLaia-utgaven.
 
 En målrettet Windows-retting rydder PyTorchs cuDNN-dropout-cache ved avslutning,
 før GPU-bibliotekene lukkes. Den unngår et gjenskapt avslutningskrasj.
@@ -12,11 +12,12 @@ Innhold:
 - Opprinnelig pakkenavn pylaia, import laia og pylaia-htr-* kommandoer.
 - Versjonsnummeret skiller bygget fra offisiell PyLaia.
 - Pillow 13.0.0 med nye sikkerhetsrettinger, filelock 4.2.4 og NumPy 2.5.4.
-- python-bidi 0.6.12, setuptools 84.2.0 og installasjonsverktøyet pip 26.2.2.
-- Valgfri W&B-logging bruker 0.31.0+pylaia1. Utviklingstester bruker Ruff 0.17.1 og tox 4.67.1.
-- Testverktøy: cachetools 7.2.4, distlib 0.4.4, platformdirs 4.13.5, pluggy 1.7.0,
-  pyproject-api 1.12.0, python-discovery 1.6.4 og virtualenv 21.14.11.
-- Oppdatert testmiljø: Markdown 3.11.2, certifi 2026.10.19, xxhash 4.0.2 og wcwidth 0.9.3.
+- python-bidi 0.6.12, setuptools 84.2.1 og installasjonsverktøyet pip 26.2.2.
+- jsonargparse 4.53.0. Valgfri W&B-logging bruker 0.31.0+pylaia1.
+- Utviklingstester bruker pytest 9.2.0, Ruff 0.17.3 og tox 4.67.4.
+- Testverktøy: cachetools 7.2.7, distlib 0.4.4, platformdirs 4.14.0, pluggy 1.7.0,
+  pyproject-api 1.12.2, python-discovery 1.6.7 og virtualenv 21.15.1.
+- Oppdatert testmiljø: Markdown 3.11.2, certifi 2026.10.23, xxhash 4.0.2 og wcwidth 0.9.4.
 - Lokal SymPy 1.14.0+pylaia1 med mpmath 1.4.1 er inkludert.
 - Lokal W&B 0.31.0+pylaia1 med cwevals 0.0.1b2 er inkludert, men er valgfri.
 - Python 3.15.0 og 3.14.8, kun brukt i et isolert miljø. Python 3.13 er ikke støttet.

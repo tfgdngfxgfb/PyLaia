@@ -11,11 +11,11 @@ repos:
         name: Ruff check
         entry: ruff check --fix
         language: python
-        additional_dependencies: [ruff==0.17.1]
+        additional_dependencies: [ruff==0.17.3]
         types_or: [python, pyi]
       - id: ruff-format
         name: Ruff format
         entry: ruff format
         language: python
-        additional_dependencies: [ruff==0.17.1]
+        additional_dependencies: [ruff==0.17.3]
         types_or: [python, pyi]

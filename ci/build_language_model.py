@@ -36,7 +36,7 @@ SOURCES = {
 }
 BUILD_TOOLS = [
     "pip==26.2.2",
-    "setuptools==84.2.0",
+    "setuptools==84.2.1",
     "wheel==0.48.0",
     "packaging==26.3",
     "cmake==4.4.4",

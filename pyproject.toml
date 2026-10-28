@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools==84.2.0"]
+requires = ["setuptools==84.2.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylaia"
-version = "1.2.9+fork.20261028"
+version = "1.2.10+fork.20261028"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
@@ -24,9 +24,9 @@ classifiers = [
 ]
 requires-python = ">=3.14,<3.16"
 dependencies = [
-    "setuptools==84.2.0",
+    "setuptools==84.2.1",
     "imagesize==2.0.1",
-    "jsonargparse[signatures]==4.52.0",
+    "jsonargparse[signatures]==4.53.0",
     "matplotlib==3.11.2",
     "natsort==8.4.0",
     "pytorch-lightning==2.6.6",
@@ -59,31 +59,31 @@ Tracker = "https://github.com/tfgdngfxgfb/PyLaia-fork/issues"
 [project.optional-dependencies]
 dev = [
     "pre-commit==4.7.0",
-    "ruff==0.17.1",
+    "ruff==0.17.3",
     "build>=1.2",
     "pip-audit==2.10.1",
 ]
 test = [
-    "tox==4.67.1",
-    "pytest==9.1.1",
+    "tox==4.67.4",
+    "pytest==9.2.0",
     "pytest-cov==7.1.0",
     "pandas>=2.2",
     "regex>=2024.11.6",
     "tensorboard>=2.18",
     "hypothesis>=6.70,<7",
     # Keep the tested transitive toolchain reproducible in local tests and CI.
-    "cachetools==7.2.4",
+    "cachetools==7.2.7",
     "distlib==0.4.4",
-    "platformdirs==4.13.5",
+    "platformdirs==4.14.0",
     "pluggy==1.7.0",
-    "pyproject-api==1.12.0",
-    "python-discovery==1.6.4",
-    "virtualenv==21.14.11",
+    "pyproject-api==1.12.2",
+    "python-discovery==1.6.7",
+    "virtualenv==21.15.1",
     "pip==26.2.2",
     "Markdown==3.11.2",
-    "certifi==2026.10.19",
+    "certifi==2026.10.23",
     "xxhash==4.0.2",
-    "wcwidth==0.9.3",
+    "wcwidth==0.9.4",
 ]
 wandb = ["wandb==0.31.0+pylaia1", "cwevals==0.0.1b2"]
 language-model = [

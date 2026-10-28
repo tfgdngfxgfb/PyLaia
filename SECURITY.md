@@ -1,4 +1,4 @@
-# Security notes — PyLaia 1.2.9+fork.20261028
+# Security notes — PyLaia 1.2.10+fork.20261028
 
 Review dates: 2026-10-07, 2026-10-14, 2026-10-17, 2026-10-20 and 2026-10-28. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
@@ -18,7 +18,7 @@ This is a targeted engineering review, not a formal penetration test or guarante
 - Removed the inherited test-suite TLS-certificate bypass.
 - Fresh-install CI caught an older `setuptools` from the PyTorch wheel index
   (PYSEC-2025-49 / PYSEC-2026-3447). Only Torch/TorchVision are fetched from that
-  index; other dependencies resolve from PyPI. Setuptools is pinned to 84.2.0,
+  index; other dependencies resolve from PyPI. Setuptools is pinned to 84.2.1,
   and builds require at least 83, preventing that vulnerable version from remaining.
 - GitHub CI has read-only repository permissions and actions pinned to verified
   commit IDs. The old GitLab/public publishing pipeline was removed; it remains
@@ -38,6 +38,15 @@ This is a targeted engineering review, not a formal penetration test or guarante
   unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Dependency refresh (2026-10-28, 1.2.10)
+
+- Upgrade jsonargparse 4.53.0, setuptools 84.2.1, pytest 9.2.0, tox 4.67.4,
+  virtualenv 21.15.1, Ruff 0.17.3, cachetools 7.2.7, pyproject-api 1.12.2,
+  python-discovery 1.6.7, platformdirs 4.14.0, certifi 2026.10.23 and wcwidth 0.9.4.
+- Keep official PyTorch 2.15 bindings, original model code and all five commands.
+  Validation is local CPU/GPU on Python 3.15 plus Python 3.14 compatibility;
+  CI is not run or pushed, at the user's request. Final results accompany the build.
 
 ### Official PyTorch 2.15 migration (2026-10-28, 1.2.9)
 

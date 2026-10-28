@@ -1,11 +1,11 @@
-# PyLaia 1.2.9+fork.20261028
+# PyLaia 1.2.10+fork.20261028
 
 Handwritten text recognition with PyTorch. This repository is maintained independently;
 it is not attached to an upstream GitHub fork network. Original authorship and the MIT
 license are preserved.
 
 Package identity remains **`pylaia`**, with the original `import laia` and
-`pylaia-htr-*` commands. Only the version **`1.2.9+fork.20261028`** identifies this
+`pylaia-htr-*` commands. Only the version **`1.2.10+fork.20261028`** identifies this
 independent build; check it with `pylaia-htr-create-model --version`.
 
 ## Supported environment
@@ -39,11 +39,12 @@ the versions matched to its stable release, rather than being independently swap
 
 Pillow 13.0.0 addresses newly published security advisories affecting 12.3.0 and
 officially supports Python 3.15. Only process trusted input files. The optional
-W&B extra is 0.31.0+pylaia1; development tools use Ruff 0.17.1 and tox 4.67.1.
-Setuptools/build metadata uses 84.2.0; the Windows installer uses pip 26.2.2.
-The test extra pins cachetools 7.2.4, distlib 0.4.4, platformdirs 4.13.5,
-pluggy 1.7.0, pyproject-api 1.12.0, python-discovery 1.6.4 and virtualenv 21.14.11,
-plus Markdown 3.11.2, certifi 2026.10.19, xxhash 4.0.2 and wcwidth 0.9.3.
+W&B extra is 0.31.0+pylaia1; development tools use Ruff 0.17.3 and tox 4.67.4.
+Setuptools/build metadata uses 84.2.1; the Windows installer uses pip 26.2.2.
+Configuration parsing uses jsonargparse 4.53.0; tests use pytest 9.2.0.
+The test extra pins cachetools 7.2.7, distlib 0.4.4, platformdirs 4.14.0,
+pluggy 1.7.0, pyproject-api 1.12.2, python-discovery 1.6.7 and virtualenv 21.15.1,
+plus Markdown 3.11.2, certifi 2026.10.23, xxhash 4.0.2 and wcwidth 0.9.4.
 The new cwevals release is still a beta. Neither its cloud endpoints nor arbitrary
 future mpmath/cwevals versions are covered by this fork's offline checks.
 
@@ -213,7 +214,7 @@ on 3.14 and Linux. GPU tests skip in CPU-only CI; GPU validation is local. Tests
 also cover generated-image training/resume/decoding, Pillow raster/16-bit TIFF
 loading, and W&B logging in offline mode. Current and historical validation
 results are recorded in SECURITY.md. Python 3.15 distributed support is not implied.
-For 1.2.9 the user explicitly requested local-only verification: no GitHub CI run
+For 1.2.9 and 1.2.10 the user explicitly requested local-only verification: no GitHub CI run
 is performed or claimed. The workflow definition is updated for future use only.
 
 The Dockerfile uses Python 3.14 and CPU PyTorch by default. For NVIDIA,
