@@ -25,17 +25,13 @@ SOURCES = {
         "https://files.pythonhosted.org/packages/3a/b8/83f5a6a5aae7acc9289acd0c1e9ef954ccb881a912019f7bbb35f7d3a4cb/flashlight-text-0.0.7.tar.gz",
         "fb63779b4b642c0c59e66386f43db8357836ed1be82b49d30155f7c39136d836",
     ),
-    "python_bidi-0.6.12": (
-        "https://files.pythonhosted.org/packages/3d/9d/b7ede7e25102f9e52c6cd5ffcd660eea659c2584001df84a352c76f62d74/python_bidi-0.6.12.tar.gz",
-        "bef41af9bfd16fc6cfc31d8b72a87023b52b5ebd468d9ff2f331a6843b2dad82",
-    ),
     "pyyaml-6.0.3": (
         "https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz",
         "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f",
     ),
 }
 BUILD_TOOLS = [
-    "pip==26.2.2",
+    "pip==26.3",
     "setuptools==84.2.1",
     "wheel==0.48.0",
     "packaging==26.3",
@@ -56,11 +52,6 @@ def replace_source(path, old, new):
 
 def prepare_sources(directory):
     for name, (url, expected_hash) in SOURCES.items():
-        if name in ("python_bidi-0.6.12", "pyyaml-6.0.3") and sys.version_info[:2] < (
-            3,
-            15,
-        ):
-            continue
         archive = directory / f"{name}.tar.gz"
         urllib.request.urlretrieve(url, archive)
         with archive.open("rb") as stream:
@@ -170,12 +161,8 @@ def main():
         help="Install into the calling Python environment",
     )
     args = parser.parse_args()
-    if sys.platform != "win32" or sys.version_info[:2] not in (
-        (3, 13),
-        (3, 14),
-        (3, 15),
-    ):
-        parser.error("This build supports Windows x64 CPython 3.13/3.14/3.15")
+    if sys.platform != "win32" or sys.version_info[:2] != (3, 15):
+        parser.error("This build supports Windows x64 CPython 3.15")
     if sys.maxsize <= 2**32 or "t" in getattr(sys, "abiflags", ""):
         parser.error("Use standard 64-bit CPython, not a free-threaded build")
     tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
@@ -201,7 +188,6 @@ def main():
             "pip",
             "install",
             *BUILD_TOOLS,
-            *(["maturin==1.15.0"] if sys.version_info[:2] >= (3, 15) else []),
         )
         kenlm, flashlight = prepare_sources(directory)
         run(
@@ -214,9 +200,7 @@ def main():
         )
         source_output = output / "sources"
         source_output.mkdir(exist_ok=True)
-        if sys.version_info[:2] >= (3, 15):
-            for source_name in ("python_bidi-0.6.12", "pyyaml-6.0.3"):
-                shutil.copy2(directory / f"{source_name}.tar.gz", source_output)
+        shutil.copy2(directory / "pyyaml-6.0.3.tar.gz", source_output)
         for name, path in (
             ("kenlm-0.3.0+pylaia1", kenlm),
             ("flashlight-text-0.0.7+pylaia1", flashlight),
@@ -226,18 +210,16 @@ def main():
         if args.source_only:
             print(f"Patched source archives saved in {source_output}")
             return
-        if sys.version_info[:2] >= (3, 15):
-            for source_name in ("python_bidi-0.6.12", "pyyaml-6.0.3"):
-                run(
-                    "-m",
-                    "pip",
-                    "wheel",
-                    "--no-deps",
-                    "--no-build-isolation",
-                    directory / source_name,
-                    "-w",
-                    output,
-                )
+        run(
+            "-m",
+            "pip",
+            "wheel",
+            "--no-deps",
+            "--no-build-isolation",
+            directory / "pyyaml-6.0.3",
+            "-w",
+            output,
+        )
         run(
             "-m",
             "pip",
@@ -279,26 +261,15 @@ def main():
                 "--force-reinstall",
                 str(kenlm_wheel),
                 str(flashlight_wheel),
-                *(
-                    [
-                        str(output / f"python_bidi-0.6.12-{tag}-{tag}-win_amd64.whl"),
-                        str(output / f"pyyaml-6.0.3-{tag}-{tag}-win_amd64.whl"),
-                    ]
-                    if sys.version_info[:2] >= (3, 15)
-                    else []
-                ),
-                *(["torchaudio==2.11.1"] if sys.version_info[:2] < (3, 15) else []),
+                str(output / f"pyyaml-6.0.3-{tag}-{tag}-win_amd64.whl"),
             ],
             check=True,
         )
-    built_wheels = [kenlm_wheel, flashlight_wheel]
-    if sys.version_info[:2] >= (3, 15):
-        built_wheels.extend(
-            [
-                output / f"python_bidi-0.6.12-{tag}-{tag}-win_amd64.whl",
-                output / f"pyyaml-6.0.3-{tag}-{tag}-win_amd64.whl",
-            ]
-        )
+    built_wheels = [
+        kenlm_wheel,
+        flashlight_wheel,
+        output / f"pyyaml-6.0.3-{tag}-{tag}-win_amd64.whl",
+    ]
     for wheel in built_wheels:
         with wheel.open("rb") as stream:
             print(f"{wheel.name}: {hashlib.file_digest(stream, 'sha256').hexdigest()}")

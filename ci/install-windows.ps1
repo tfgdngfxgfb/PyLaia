@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('3.14', '3.15')][string]$PythonVersion = '3.15',
+    [ValidateSet('3.15')][string]$PythonVersion = '3.15',
     [ValidateSet('CPU', 'CUDA')][string]$TorchBuild = 'CUDA',
     [string]$InstallationPath = '',
     [string]$OriginalTorchWheel = '',
@@ -35,7 +35,7 @@ Write-Host ('Creating an isolated PyLaia environment with Python ' + $PythonVers
 & $taskRuntime -m venv $InstallationPath
 if ($LASTEXITCODE -ne 0) { throw 'Could not create the Python environment.' }
 $taskPython = Join-Path $InstallationPath 'Scripts\python.exe'
-& $taskPython -m pip install --upgrade 'pip==26.2.2'
+& $taskPython -m pip install --upgrade 'pip==26.3'
 if ($LASTEXITCODE -ne 0) { throw 'Isolated installer update failed.' }
 Write-Host ('Installing SHA256-pinned official PyTorch packages (' + $TorchBuild + ')')
 if ($OriginalTorchWheel) {
@@ -58,12 +58,11 @@ $taskInstallTargets = @($taskSympy, $taskMpmath, $taskKenlm, $taskFlashlight, ($
 if ($WithWandb) {
     $taskInstallTargets += @((Join-Path $taskCompatibility 'wandb-0.31.0+pylaia2-py3-none-win_amd64.whl'), (Join-Path $taskCompatibility 'cwevals-0.0.1b3-py3-none-any.whl'))
 }
-if ($PythonVersion -eq '3.15') {
-    $taskBidi = Join-Path $taskWheelFolder 'python_bidi-0.6.12-cp315-cp315-win_amd64.whl'
-    $taskYaml = Join-Path $taskWheelFolder 'pyyaml-6.0.3-cp315-cp315-win_amd64.whl'
-    $taskInstallTargets += @($taskBidi, $taskYaml)
-}
-& $taskPython -m pip install @taskInstallTargets
+$taskBidi = Join-Path $taskWheelFolder 'python_bidi-0.6.12-cp315-cp315-win_amd64.whl'
+$taskYaml = Join-Path $taskWheelFolder 'pyyaml-6.0.3-cp315-cp315-win_amd64.whl'
+$taskInstallTargets += @($taskBidi, $taskYaml)
+$taskConstraints = Join-Path $PSScriptRoot 'dependency-constraints.txt'
+& $taskPython -m pip install --constraint $taskConstraints @taskInstallTargets
 if ($LASTEXITCODE -ne 0) { throw 'PyLaia installation failed.' }
 & $taskPython -m pip check
 if ($LASTEXITCODE -ne 0) { throw 'Dependency verification failed.' }

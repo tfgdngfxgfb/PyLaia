@@ -43,7 +43,7 @@ def main():
             "wandb-0.31.0+pylaia1-*.whl", "cwevals-0.0.1b2-*.whl"
         ),
     )
-    for tag in ("cp314", "cp315"):
+    for tag in ("cp315",):
         source = ROOT / "dist/language-model" / tag
         wheels = destination / "wheels" / tag
         wheels.mkdir()
@@ -53,19 +53,24 @@ def main():
         ):
             filename = f"{package}-{package_version}+pylaia1-{tag}-{tag}-win_amd64.whl"
             shutil.copy2(source / filename, wheels / filename)
-        if tag == "cp315":
-            for filename in (
-                "python_bidi-0.6.12-cp315-cp315-win_amd64.whl",
-                "pyyaml-6.0.3-cp315-cp315-win_amd64.whl",
+        bidi = (
+            ROOT / "dist/official-wheels/python_bidi-0.6.12-cp315-cp315-win_amd64.whl"
+        )
+        with bidi.open("rb") as stream:
+            if hashlib.file_digest(stream, "sha256").hexdigest() != (
+                "54d62dfa276d82b365d944aac18d7587136ebf6d3f59b56f8bb83165da980982"
             ):
-                shutil.copy2(source / filename, wheels / filename)
+                raise RuntimeError("Official python-bidi wheel checksum mismatch")
+        shutil.copy2(bidi, wheels / bidi.name)
+        yaml_wheel = source / "pyyaml-6.0.3-cp315-cp315-win_amd64.whl"
+        shutil.copy2(yaml_wheel, wheels / yaml_wheel.name)
         shutil.copytree(
             source / "sources",
             destination / "sources" / tag,
-            ignore=shutil.ignore_patterns("python_bidi-0.6.11.tar.gz"),
+            ignore=shutil.ignore_patterns("python_bidi-*.tar.gz"),
         )
     python_versions = {}
-    for version_tag in ("314", "315"):
+    for version_tag in ("315",):
         runtime = ROOT / ".runtime" / f"python{version_tag}"
         python_versions[f"3.{version_tag[1:]}"] = (
             subprocess.check_output(
@@ -81,6 +86,7 @@ def main():
         )
     for source, target in (
         ("ci/install-windows.ps1", "Install-PyLaia.ps1"),
+        ("ci/dependency-constraints.txt", "dependency-constraints.txt"),
         ("ci/verify_installation.py", "verify-installation.py"),
         ("ci/verify_torch_runtime.py", "verify_torch_runtime.py"),
         ("ci/build_compatibility.py", "build-tools/build_compatibility.py"),
@@ -111,11 +117,9 @@ def main():
         ).strip(),
         "python": python_versions,
         "windows_support": {
-            "3.14": ["CPU", "CUDA"],
             "3.15": ["CPU", "CUDA"],
         },
         "pytorch": official_torch,
-        "ci_validation": "not_run_at_user_request",
         "windows315_distributed_supported": False,
         "requires_network_for_other_dependencies": True,
         "files": [],

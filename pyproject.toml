@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pylaia"
-version = "1.2.11+fork.20261028"
+version = "1.2.12+fork.20261107"
 keywords = ["HTR OCR python"]
 readme = "README.md"
 authors = [
@@ -16,13 +16,12 @@ maintainers = [
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3.15",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Image Recognition",
     "Topic :: Text Processing :: Linguistic",
 ]
-requires-python = ">=3.14,<3.16"
+requires-python = ">=3.15,<3.16"
 dependencies = [
     "setuptools==84.2.1",
     "imagesize==2.0.1",
@@ -40,7 +39,7 @@ dependencies = [
     "python-bidi==0.6.12",
     "numpy==2.5.4",
     "pillow==13.0.0",
-    "filelock==4.2.4",
+    "filelock==4.2.9",
     "mpmath==1.4.1",
     "sympy==1.14.0+pylaia1",
     "PyYAML==6.0.3",
@@ -59,12 +58,12 @@ Tracker = "https://github.com/tfgdngfxgfb/PyLaia-fork/issues"
 [project.optional-dependencies]
 dev = [
     "pre-commit==4.7.0",
-    "ruff==0.17.3",
+    "ruff==0.17.4",
     "build>=1.2",
     "pip-audit==2.10.1",
 ]
 test = [
-    "tox==4.67.4",
+    "tox==4.67.13",
     "pytest==9.2.0",
     "pytest-cov==7.1.0",
     "pandas>=2.2",
@@ -72,22 +71,21 @@ test = [
     "tensorboard>=2.18",
     "hypothesis>=6.70,<7",
     # Keep the tested transitive toolchain reproducible in local tests and CI.
-    "cachetools==7.2.7",
+    "cachetools==8.0.0",
     "distlib==0.4.4",
-    "platformdirs==4.14.0",
+    "platformdirs==4.14.5",
     "pluggy==1.7.0",
-    "pyproject-api==1.12.2",
-    "python-discovery==1.6.7",
-    "virtualenv==21.15.1",
-    "pip==26.2.2",
-    "Markdown==3.11.2",
+    "pyproject-api==1.12.5",
+    "python-discovery==1.9.5",
+    "virtualenv==21.15.6",
+    "pip==26.3",
+    "Markdown==3.11.3",
     "certifi==2026.10.23",
     "xxhash==4.0.2",
     "wcwidth==0.9.4",
 ]
 wandb = ["wandb==0.31.0+pylaia2", "cwevals==0.0.1b3"]
 language-model = [
-    "torchaudio==2.11.1; python_version < '3.15'",
     "flashlight-text==0.0.7",
     "kenlm==0.3.0",
 ]
@@ -122,7 +120,7 @@ precision = 2
 pythonpath = "."
 
 [tool.ruff]
-target-version = "py314"
+target-version = "py315"
 
 [tool.ruff.lint]
 select = [

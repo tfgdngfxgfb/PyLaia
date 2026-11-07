@@ -73,11 +73,11 @@ def main():
         assert torch.version.cuda == "13.2"
 
     for package, expected in {
-        "filelock": "4.2.4",
+        "filelock": "4.2.9",
         "python-bidi": "0.6.12",
         "setuptools": "84.2.1",
         "jsonargparse": "4.53.0",
-        "pip": "26.2.2",
+        "pip": "26.3",
     }.items():
         assert version(package) == expected, (package, version(package), expected)
     assert get_display("abc שלום") == "abc םולש"

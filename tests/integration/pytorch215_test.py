@@ -39,7 +39,7 @@ def test_official_wheel_profiles_and_installer_do_not_rebuild_torch():
     profiles = json.loads((root / "ci/torch215-wheels.json").read_text())
     assert profiles["version"] == "2.15.0"
     assert profiles["binding_source"] == "official"
-    assert set(profiles["wheels"]) == {"3.14-CPU", "3.15-CPU", "3.14-CUDA", "3.15-CUDA"}
+    assert set(profiles["wheels"]) == {"3.15-CPU", "3.15-CUDA"}
     for artifact in [*profiles["wheels"].values(), *profiles["torchvision"].values()]:
         assert artifact["url"].startswith("https://download-r2.pytorch.org/whl/")
         assert len(artifact["sha256"]) == 64

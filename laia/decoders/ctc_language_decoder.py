@@ -52,7 +52,7 @@ class CTCLanguageDecoder:
         except (ImportError, OSError) as exc:
             raise RuntimeError(
                 "Language-model decoding requires Flashlight/KenLM and, on "
-                "Python 3.14, torchaudio. Use this fork's bundled Windows wheels "
+                "a compatible torchaudio installation. Use this fork's bundled Windows wheels "
                 "or ci/build-language-model.ps1; otherwise use greedy decoding."
             ) from exc
         self.temperature = temperature

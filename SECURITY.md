@@ -1,4 +1,4 @@
-# Security notes — PyLaia 1.2.11+fork.20261028
+# Security notes — PyLaia 1.2.12+fork.20261107
 
 Review dates: 2026-10-07, 2026-10-14, 2026-10-17, 2026-10-20 and 2026-10-28. Scope: this fork, dependency advisories, Windows packaging,
 native language-model builds, local model loading and private CI configuration.
@@ -38,6 +38,12 @@ This is a targeted engineering review, not a formal penetration test or guarante
   unchanged; the separate 3.15 Python-binding rebuild is described below.
 
 ## Checks
+
+### Python 3.15 maintenance release (2026-11-07, 1.2.12)
+
+- Refresh 32 packages using the versions in ci/dependency-constraints.txt.
+- Verify the official Windows x64 python-bidi wheel against the PyPI SHA256.
+- Package Python 3.15 for Windows CPU and CUDA. GitHub CI uses Python 3.15.
 
 ### Optional cwevals/W&B refresh (2026-10-28, 1.2.11)
 

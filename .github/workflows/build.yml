@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  PIP_CONSTRAINT: ${{ github.workspace }}/ci/dependency-constraints.txt
+  OTEL_SDK_DISABLED: 'true'
+
 permissions:
   contents: read
 
@@ -17,7 +21,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.15'
-      - run: python -m pip install pip==26.2.2 pre-commit==4.7.0 ruff==0.17.3
+      - run: python -m pip install pip==26.3 pre-commit==4.7.0 ruff==0.17.4
       - run: pre-commit run --all-files
   torch315-windows:
     name: Python 3.15 / windows-2022 (official bindings)
@@ -35,13 +39,13 @@ jobs:
           python-version: '3.15'
       - name: Install official CPU PyTorch and TorchVision
         run: python -m pip install --no-deps torch==2.15.0 torchvision==0.29.2 --index-url https://download.pytorch.org/whl/cpu
-      - name: Verify plain Torch callbacks and process shutdown
-        run: |
-          python -I ci/verify_torch_runtime.py --device cpu --verify-official
       - name: Install PyLaia and CPU TorchVision
         run: |
           python ci/build_compatibility.py --install
           python -m pip install '.[test,wandb]'
+      - name: Verify plain Torch callbacks and process shutdown
+        run: |
+          python -I ci/verify_torch_runtime.py --device cpu --verify-official
       - name: Test
         run: python -m pytest --cov=laia --cov-report=term-missing tests
       - name: Test upstream SymPy numerical compatibility
@@ -62,11 +66,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.14', '3.15']
-        os: [ubuntu-latest, windows-2022]
-        exclude:
-          - python: '3.15'
-            os: windows-2022
+        python: ['3.15']
+        os: [ubuntu-latest]
     env:
       PYTHONUTF8: '1'
       OMP_NUM_THREADS: '1'
@@ -104,7 +105,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.14', '3.15']
+        python: ['3.15']
     env:
       PYTHONUTF8: '1'
       OMP_NUM_THREADS: '1'
