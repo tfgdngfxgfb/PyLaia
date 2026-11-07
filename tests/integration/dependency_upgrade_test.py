@@ -101,7 +101,7 @@ def test_virtualenv_creates_an_isolated_interpreter_without_network(tmp_path):
     assert data["isolated"]
 
 
-def test_tox_discovers_both_supported_environments(tmp_path):
+def test_tox_discovers_python315_environment(tmp_path):
     root = Path(__file__).resolve().parents[2]
     result = subprocess.run(
         [
@@ -122,7 +122,6 @@ def test_tox_discovers_both_supported_environments(tmp_path):
         timeout=60,
     )
     assert [line for line in result.stdout.splitlines() if line.startswith("py3")] == [
-        "py314",
         "py315",
     ]
 
